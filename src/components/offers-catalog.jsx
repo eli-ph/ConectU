@@ -125,7 +125,7 @@ export function OffersCatalog() {
 
   return (
     <>
-      <div className="grid gap-7 lg:grid-cols-[260px_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] xl:gap-7">
         <div className="h-fit space-y-4 lg:sticky lg:top-24">
           <aside className="rounded-xl border border-slate-200 bg-white p-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
@@ -196,11 +196,11 @@ export function OffersCatalog() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={19} />
             <input value={search} onChange={(event) => setSearch(event.target.value)} className="h-12 w-full rounded-xl border border-slate-300 bg-white pl-11 pr-4 text-sm shadow-sm" placeholder="Buscar por puesto, empresa o habilidad" aria-label="Buscar ofertas" />
           </div>
-          <div className="mb-4 flex items-center justify-between gap-4">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-slate-600"><strong className="text-slate-900">{filtered.length}</strong> oportunidades de demostración</p>
             <select className="select-chevron rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700" aria-label="Ordenar ofertas"><option>Más recientes</option><option>Relevancia</option></select>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 min-[1536px]:grid-cols-4 min-[1920px]:grid-cols-5">
             {filtered.map((offer) => <OfferCard key={offer.id} offer={offer} onOpen={() => setSelected(offer)} />)}
           </div>
           {filtered.length === 0 && (

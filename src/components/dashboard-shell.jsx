@@ -151,7 +151,7 @@ export function DashboardShell({ role, title, eyebrow, children }) {
         </header>
 
         <main className="px-4 py-7 sm:px-7 lg:px-8 lg:py-7">
-          <div className="mx-auto max-w-[1240px]">
+          <div className="mx-auto max-w-[1240px] 2xl:max-w-[1480px]">
             <div className="mb-7">
               {eyebrow && <p className="mb-1 text-sm font-semibold text-brand-gold">{eyebrow}</p>}
               <h1 className="text-2xl font-bold tracking-[-0.03em] text-brand-navy sm:text-[2rem]">{title}</h1>

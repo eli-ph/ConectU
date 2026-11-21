@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 124" role="img" aria-labelledby="logo-title logo-desc">
+  <title id="logo-title">ConectU</title>
+  <desc id="logo-desc">Logotipo ConectU en azul marino y dorado, con una curva que conecta dos nodos.</desc>
+  <defs>
+    <linearGradient id="connection-gradient" x1="82" y1="48" x2="330" y2="20" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0b2a4e"/>
+      <stop offset="0.64" stop-color="#0b2a4e"/>
+      <stop offset="1" stop-color="#d5a132"/>
+    </linearGradient>
+  </defs>
+  <path d="M58 64C126 13 238 5 324 25" fill="none" stroke="url(#connection-gradient)" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="108" cy="44" r="15" fill="#0b2a4e"/>
+  <circle cx="319" cy="24" r="16" fill="#d5a132"/>
+  <text x="7" y="108" fill="#0b2a4e" font-family="Arial Rounded MT Bold, Arial Black, Inter, sans-serif" font-size="78" font-weight="900" letter-spacing="-6" textLength="326" lengthAdjust="spacingAndGlyphs">Conect</text>
+  <text x="327" y="108" fill="#c99524" font-family="Arial Rounded MT Bold, Arial Black, Inter, sans-serif" font-size="78" font-weight="900" letter-spacing="-4" textLength="83" lengthAdjust="spacingAndGlyphs">U</text>
+</svg>

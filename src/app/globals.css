@@ -63,6 +63,16 @@ a {
   margin-inline: auto;
 }
 
+.container-catalog {
+  width: min(1840px, calc(100% - 2rem));
+  margin-inline: auto;
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
 .surface-shadow {
   box-shadow: 0 18px 55px rgba(20, 43, 73, 0.08);
 }
@@ -85,5 +95,9 @@ a {
 @media (max-width: 640px) {
   .container-page {
     width: min(100% - 1.25rem, 1180px);
+  }
+
+  .container-catalog {
+    width: min(100% - 1.25rem, 1840px);
   }
 }
