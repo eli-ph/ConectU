@@ -18,11 +18,11 @@ export function PublicHeader({ compact = false }) {
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
-      <div className="container-page flex h-[72px] items-center justify-between gap-5">
+      <div className="container-page flex h-[64px] items-center justify-between gap-5">
         <Brand />
 
         {!compact && (
-          <nav className="hidden items-center gap-7 lg:flex" aria-label="Navegación principal">
+          <nav className="hidden items-center gap-8 lg:flex" aria-label="Navegación principal">
             {links.map((link) => {
               const active = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
               return (

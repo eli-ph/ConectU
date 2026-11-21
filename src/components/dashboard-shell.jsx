@@ -31,7 +31,7 @@ const navigation = {
     ["/estudiante", "Resumen", LayoutDashboard],
     ["/ofertas", "Explorar ofertas", BriefcaseBusiness],
     ["/estudiante/postulaciones", "Mis postulaciones", ClipboardList],
-    ["/estudiante/cuenta", "Mi perfil y CV", FileText],
+    ["/estudiante/cuenta", "Mi cuenta", FileText],
   ],
   empresa: [
     ["/empresa", "Resumen", LayoutDashboard],
@@ -64,8 +64,8 @@ export function DashboardShell({ role, title, eyebrow, children }) {
   const meta = roleMeta[role];
 
   const sidebar = (
-    <aside className="flex h-full w-[268px] flex-col border-r border-slate-200 bg-white">
-      <div className="flex h-[72px] items-center border-b border-slate-100 px-5"><Brand /></div>
+    <aside className="flex h-full w-72 flex-col border-r border-slate-200 bg-white">
+      <div className="flex h-[68px] items-center px-6"><Brand /></div>
       <div className="px-5 pb-2 pt-6 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">{meta.label}</div>
       <nav className="flex-1 space-y-1 px-3" aria-label={meta.label}>
         {navigation[role].map(([href, label, Icon]) => {
@@ -84,6 +84,7 @@ export function DashboardShell({ role, title, eyebrow, children }) {
           );
         })}
       </nav>
+      {role === "estudiante" && <div className="mx-4 mb-4 rounded-xl bg-[#eeefff] p-4"><div className="flex items-center justify-between gap-2"><span className="text-xs font-bold text-brand-navy">Plan estudiante</span><span className="rounded-full bg-white px-2 py-0.5 text-[0.68rem] font-semibold text-brand-navy">Activo</span></div><p className="mt-2 text-xs leading-5 text-slate-600">Acceso gratuito a las funciones estudiantiles.</p></div>}
       <div className="border-t border-slate-100 p-3">
         <Link href={`/${role}/cuenta`} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100">
           <Settings size={18} /> Mi cuenta y seguridad
@@ -101,12 +102,12 @@ export function DashboardShell({ role, title, eyebrow, children }) {
       {menuOpen && (
         <div className="fixed inset-0 z-[60] lg:hidden">
           <button className="absolute inset-0 bg-slate-950/40" aria-label="Cerrar navegación" onClick={() => setMenuOpen(false)} />
-          <div className="relative h-full w-[268px] shadow-2xl">{sidebar}</div>
+          <div className="relative h-full w-72 shadow-2xl">{sidebar}</div>
         </div>
       )}
 
-      <div className="lg:pl-[268px]">
-        <header className="sticky top-0 z-30 flex h-[72px] items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-xl sm:px-7">
+      <div className="lg:pl-72">
+        <header className="sticky top-0 z-30 flex h-[68px] items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-xl sm:px-7">
           <div className="flex items-center gap-3">
             <button className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 text-brand-navy lg:hidden" onClick={() => setMenuOpen(true)} aria-label="Abrir navegación">
               <Menu size={20} />
@@ -149,7 +150,7 @@ export function DashboardShell({ role, title, eyebrow, children }) {
           </div>
         </header>
 
-        <main className="px-4 py-7 sm:px-7 lg:px-9 lg:py-9">
+        <main className="px-4 py-7 sm:px-7 lg:px-8 lg:py-7">
           <div className="mx-auto max-w-[1240px]">
             <div className="mb-7">
               {eyebrow && <p className="mb-1 text-sm font-semibold text-brand-gold">{eyebrow}</p>}

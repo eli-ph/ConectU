@@ -3,11 +3,11 @@
 @theme {
   --font-sans: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
   --color-brand-navy: #142b49;
-  --color-brand-navy-dark: #0b1b30;
+  --color-brand-navy-dark: #001631;
   --color-brand-navy-light: #1e3d66;
   --color-brand-gold: #c49a3a;
   --color-brand-gold-soft: #f7efd9;
-  --color-page: #f8fafc;
+  --color-page: #faf8ff;
   --color-border: #e2e8f0;
   --color-ink: #0f172a;
   --color-muted: #475569;
@@ -28,7 +28,7 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
-  background: #f8fafc;
+  background: #faf8ff;
   color: #0f172a;
   font-family: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: 16px;

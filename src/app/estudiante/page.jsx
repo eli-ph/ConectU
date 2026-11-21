@@ -1,11 +1,46 @@
-import { BriefcaseBusiness, Clock3, FileText, Send, Sparkles } from "lucide-react";
+import { CheckCircle2, Clock3, FileText, Send, XCircle } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { MetricCard } from "@/components/metric-card";
 
 export const metadata = { title: "Panel del estudiante" };
 
 export default function StudentDashboard() {
-  return <DashboardShell role="estudiante" title="Hola, David" eyebrow="Resumen de tu actividad"><div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900"><strong>Datos de demostración.</strong> La autenticación y la información real se conectarán en una etapa posterior.</div><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><MetricCard icon={Send} label="Postulaciones enviadas" value="4" detail="En el ciclo actual" /><MetricCard icon={Clock3} label="En revisión" value="2" detail="Con seguimiento pendiente" tone="gold" /><MetricCard icon={FileText} label="CV vigente" value="1" detail="Actualizado recientemente" tone="blue" /><MetricCard icon={BriefcaseBusiness} label="Ofertas guardadas" value="3" detail="Para revisar después" tone="green" /></div><div className="mt-6 grid gap-6 xl:grid-cols-[1.5fr_0.8fr]"><section className="rounded-xl border border-slate-200 bg-white p-6"><div className="flex items-center justify-between"><h2 className="text-lg font-bold text-brand-navy">Postulaciones recientes</h2><button className="text-sm font-semibold text-brand-navy">Ver todas</button></div><div className="mt-5 divide-y divide-slate-100"><Activity title="Desarrollo frontend · nivel inicial" company="Empresa tecnológica" state="En revisión" /><Activity title="Análisis de datos para operaciones" company="Organización de servicios" state="Enviada" /><Activity title="Automatización de procesos" company="Empresa industrial" state="Aceptada" /></div></section><section className="rounded-xl bg-brand-navy p-6 text-white"><Sparkles className="text-brand-gold" size={22} /><h2 className="mt-5 text-xl font-bold">Completa tu perfil</h2><p className="mt-2 text-sm leading-6 text-slate-300">Agrega habilidades y mantén actualizado tu único CV vigente para que tu información esté lista al postularte.</p><button className="mt-6 w-full rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-brand-navy">Ir a mi perfil</button></section></div></DashboardShell>;
+  return (
+    <DashboardShell role="estudiante" title="¡Hola, David! Bienvenido a tu portal de vinculación" eyebrow="Resumen del estudiante">
+      <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><p className="text-sm text-slate-600">Consulta el avance de tus postulaciones y explora nuevas oportunidades.</p><span className="w-fit rounded-full bg-[#eeefff] px-3 py-1 text-xs font-semibold text-brand-navy">Vista de demostración</span></div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <MetricCard icon={Send} label="Total de postulaciones" value="—" detail="Histórico del estudiante" />
+        <MetricCard icon={Clock3} label="En revisión" value="—" detail="Pendientes de resolución" tone="gold" />
+        <MetricCard icon={CheckCircle2} label="Aceptadas" value="—" detail="Dentro del ciclo" tone="blue" />
+        <MetricCard icon={XCircle} label="Rechazadas" value="—" detail="Historial conservado" />
+      </div>
+
+      <div className="mt-7 grid gap-6 xl:grid-cols-[1.55fr_0.65fr]">
+        <section>
+          <div className="mb-4 flex items-end justify-between gap-3"><div><h2 className="text-xl font-bold text-brand-navy">Postulaciones recientes</h2><p className="text-sm text-slate-500">Estados de ejemplo para definir la presentación.</p></div><button className="hidden text-sm font-semibold text-brand-navy sm:block">Ver todas</button></div>
+          <div className="space-y-3">
+            <Application initials="ET" company="Empresa tecnológica" title="Desarrollo frontend · nivel inicial" meta="Híbrida · Ciudad de México" state="En revisión" />
+            <Application initials="OI" company="Organización industrial" title="Automatización de procesos" meta="Presencial · Estado de México" state="Aceptada" />
+            <Application initials="CS" company="Consultoría de servicios" title="Análisis de datos" meta="Remota · México" state="Enviada" />
+          </div>
+        </section>
+
+        <aside className="h-fit rounded-xl border border-slate-200 bg-white p-6">
+          <div className="flex items-center justify-between"><h2 className="text-lg font-bold text-brand-navy">Actividad reciente</h2><Clock3 size={18} className="text-brand-gold" /></div>
+          <div className="mt-5 divide-y divide-slate-100">
+            <Activity icon={FileText} title="CV actualizado" text="Tu archivo vigente está disponible." />
+            <Activity icon={CheckCircle2} title="Estado actualizado" text="Una postulación cambió de estado." />
+            <Activity icon={Send} title="Postulación enviada" text="La solicitud quedó registrada." />
+          </div>
+        </aside>
+      </div>
+    </DashboardShell>
+  );
 }
 
-function Activity({ title, company, state }) { const tone = state === 'Aceptada' ? 'bg-emerald-50 text-emerald-700' : state === 'En revisión' ? 'bg-amber-50 text-amber-700' : 'bg-sky-50 text-sky-700'; return <div className="flex flex-col justify-between gap-3 py-4 first:pt-0 sm:flex-row sm:items-center"><div><p className="font-semibold text-slate-800">{title}</p><p className="text-sm text-slate-500">{company}</p></div><span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${tone}`}>{state}</span></div>; }
+function Application({ initials, company, title, meta, state }) {
+  const tone = state === "Aceptada" ? "bg-emerald-50 text-emerald-700" : state === "En revisión" ? "bg-amber-100 text-amber-800" : "bg-[#eeefff] text-brand-navy";
+  return <article className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 sm:flex-row sm:items-center"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[#eeefff] font-bold text-brand-navy">{initials}</span><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="font-bold text-brand-navy">{company}</h3><span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">Oportunidad</span></div><p className="mt-1 text-sm font-medium text-slate-700">{title}</p><p className="mt-1 text-xs text-slate-500">{meta}</p></div><span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${tone}`}>{state}</span></article>;
+}
+
+function Activity({ icon: Icon, title, text }) { return <div className="flex gap-3 py-4 first:pt-0"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#eeefff] text-brand-navy"><Icon size={17} /></span><div><p className="text-sm font-semibold text-slate-800">{title}</p><p className="mt-0.5 text-xs leading-5 text-slate-500">{text}</p></div></div>; }
