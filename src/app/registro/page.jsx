@@ -1,0 +1,12 @@
+import Link from "next/link";
+import { Building2, GraduationCap } from "lucide-react";
+import { Brand } from "@/components/brand";
+import { PublicFooter } from "@/components/public-footer";
+
+export const metadata = { title: "Crear cuenta" };
+
+export default function RegisterPage() {
+  return <div className="flex min-h-screen flex-col bg-page"><header className="border-b border-slate-200 bg-white"><div className="container-page flex h-[72px] items-center justify-between"><Brand /><Link href="/" className="text-sm font-semibold text-brand-navy">Volver al inicio</Link></div></header><main className="flex-1 px-4 py-14"><div className="mx-auto max-w-4xl text-center"><p className="text-sm font-bold uppercase tracking-[0.12em] text-brand-gold">Crea tu cuenta</p><h1 className="mt-3 text-3xl font-bold tracking-[-0.035em] text-brand-navy">¿Cómo utilizarás la plataforma?</h1><p className="mt-3 text-slate-600">Selecciona el tipo de registro para continuar.</p><div className="mt-10 grid gap-5 md:grid-cols-2"><RegisterCard icon={GraduationCap} title="Soy estudiante" text="Explora oportunidades, administra tu CV y da seguimiento a tus postulaciones." detail="Requiere correo institucional permitido" /><RegisterCard icon={Building2} title="Represento a una empresa" text="Registra tu organización y administra oportunidades y candidaturas." detail="La cuenta pasará por revisión administrativa" /></div><p className="mt-8 text-sm text-slate-500">¿Ya tienes una cuenta? <Link href="/ingresar" className="font-semibold text-brand-navy">Inicia sesión</Link></p></div></main><PublicFooter compact /></div>;
+}
+
+function RegisterCard({ icon: Icon, title, text, detail }) { return <article className="group rounded-2xl border border-slate-200 bg-white p-8 text-left shadow-sm transition hover:-translate-y-1 hover:border-brand-gold hover:shadow-xl"><span className="grid h-14 w-14 place-items-center rounded-xl bg-brand-navy text-white"><Icon size={26} /></span><h2 className="mt-6 text-xl font-bold text-brand-navy">{title}</h2><p className="mt-3 text-sm leading-6 text-slate-600">{text}</p><p className="mt-5 rounded-lg bg-slate-50 p-3 text-xs text-slate-500">{detail}</p><button className="mt-6 w-full rounded-lg bg-brand-navy px-5 py-3 text-sm font-semibold text-white">Continuar</button></article>; }
