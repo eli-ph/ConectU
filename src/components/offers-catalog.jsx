@@ -1,7 +1,24 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Building2, Clock3, MapPin, Search, SlidersHorizontal, X } from "lucide-react";
+import { Building2, CheckCircle2, Clock3, Laptop, MapPin, Plus, Search, SlidersHorizontal, X } from "lucide-react";
+
+const typeOptions = [
+  { value: "Empleo", label: "Empleo inicial", count: 18 },
+  { value: "Prácticas", label: "Prácticas profesionales", count: 14 },
+  { value: "Becariado", label: "Becariado / Trainee", count: 9 },
+  { value: "Servicio social", label: "Servicio social", count: 7 },
+];
+
+const axisOptions = [
+  "Ciencia y tecnología",
+  "Industria y energía",
+  "Salud y biotecnología",
+  "Educación e impacto social",
+  "Sustentabilidad y movilidad",
+];
+
+const suggestedSkills = ["AWS", "CAD", "SolidWorks", "IoT", "SQL", "Docker"];
 
 const offers = [
   {
@@ -24,7 +41,7 @@ const offers = [
     type: "Prácticas",
     mode: "Remota",
     location: "México",
-    axis: "Innovación",
+    axis: "Ciencia y tecnología",
     description: "Apoya el análisis de información operativa y la preparación de tableros de seguimiento.",
     skills: ["Python", "SQL", "Excel"],
     promoted: false,
@@ -60,38 +77,119 @@ const offers = [
 
 export function OffersCatalog() {
   const [search, setSearch] = useState("");
-  const [type, setType] = useState("Todas");
+  const [selectedTypes, setSelectedTypes] = useState(["Empleo", "Prácticas"]);
+  const [selectedAxes, setSelectedAxes] = useState(["Ciencia y tecnología", "Industria y energía"]);
+  const [selectedModes, setSelectedModes] = useState(["Remota"]);
+  const [selectedSkills, setSelectedSkills] = useState(["Python", "React", "PLC"]);
+  const [skillSearch, setSkillSearch] = useState("");
+  const [activeFilters, setActiveFilters] = useState({ types: [], axes: [], modes: [], skills: [] });
   const [selected, setSelected] = useState(null);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return offers.filter((offer) => {
       const matchesSearch = !term || `${offer.title} ${offer.company} ${offer.skills.join(" ")}`.toLowerCase().includes(term);
-      const matchesType = type === "Todas" || offer.type === type;
-      return matchesSearch && matchesType;
+      const matchesType = activeFilters.types.length === 0 || activeFilters.types.includes(offer.type);
+      const matchesAxis = activeFilters.axes.length === 0 || activeFilters.axes.includes(offer.axis);
+      const matchesMode = activeFilters.modes.length === 0 || activeFilters.modes.some((mode) => offer.mode.toLowerCase().startsWith(mode.toLowerCase().slice(0, 5)));
+      const matchesSkills = activeFilters.skills.length === 0 || activeFilters.skills.some((skill) => offer.skills.some((offerSkill) => offerSkill.toLowerCase().includes(skill.toLowerCase())));
+      return matchesSearch && matchesType && matchesAxis && matchesMode && matchesSkills;
     });
-  }, [search, type]);
+  }, [search, activeFilters]);
+
+  const toggleValue = (value, values, setValues) => {
+    setValues(values.includes(value) ? values.filter((item) => item !== value) : [...values, value]);
+  };
+
+  const addSkill = (skill) => {
+    const cleanSkill = skill.trim();
+    if (cleanSkill && !selectedSkills.includes(cleanSkill)) setSelectedSkills([...selectedSkills, cleanSkill]);
+    setSkillSearch("");
+  };
+
+  const applyFilters = () => setActiveFilters({
+    types: [...selectedTypes],
+    axes: [...selectedAxes],
+    modes: [...selectedModes],
+    skills: [...selectedSkills],
+  });
+
+  const clearFilters = () => {
+    setSelectedTypes([]);
+    setSelectedAxes([]);
+    setSelectedModes([]);
+    setSelectedSkills([]);
+    setSkillSearch("");
+    setActiveFilters({ types: [], axes: [], modes: [], skills: [] });
+  };
 
   return (
     <>
       <div className="grid gap-7 lg:grid-cols-[260px_1fr]">
-        <aside className="h-fit rounded-xl border border-slate-200 bg-white p-5 lg:sticky lg:top-24">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4"><span className="flex items-center gap-2 text-base font-bold text-brand-navy"><SlidersHorizontal size={18} /> Filtros activos</span><button className="text-xs font-medium text-slate-500 underline">Limpiar</button></div>
-          <label className="mt-5 block text-sm font-semibold text-slate-700" htmlFor="type-filter">Tipo de oportunidad</label>
-          <select id="type-filter" value={type} onChange={(event) => setType(event.target.value)} className="select-chevron mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700">
-            {['Todas', 'Empleo', 'Becariado', 'Prácticas', 'Servicio social'].map((value) => <option key={value}>{value}</option>)}
-          </select>
-          <div className="mt-5 border-t border-slate-100 pt-5">
-            <p className="text-sm font-semibold text-slate-700">Modalidad</p>
-            <div className="mt-3 space-y-2.5">
-              {['Presencial', 'Híbrida', 'Remota'].map((value) => (
-                <label key={value} className="flex items-center gap-2.5 text-sm text-slate-600"><input type="checkbox" className="h-4 w-4 rounded border-slate-300 accent-brand-navy" /> {value}</label>
-              ))}
+        <div className="h-fit space-y-4 lg:sticky lg:top-24">
+          <aside className="rounded-xl border border-slate-200 bg-white p-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <span className="flex items-center gap-2 text-base font-bold text-brand-navy"><SlidersHorizontal size={18} /> Filtros activos</span>
+              <button type="button" onClick={clearFilters} className="text-xs font-medium text-slate-500 underline">Limpiar filtros</button>
             </div>
+
+            <fieldset className="mt-5">
+              <div className="flex items-center justify-between gap-3"><legend className="text-xs font-bold uppercase tracking-[0.08em] text-slate-700">Tipo de oferta</legend><span className="text-[0.68rem] uppercase tracking-[0.06em] text-slate-400">Selección múltiple</span></div>
+              <div className="mt-3 space-y-2.5">
+                {typeOptions.map((option) => (
+                  <label key={option.value} className="flex cursor-pointer items-center gap-2.5 text-sm text-slate-600">
+                    <input type="checkbox" checked={selectedTypes.includes(option.value)} onChange={() => toggleValue(option.value, selectedTypes, setSelectedTypes)} className="h-4 w-4 border-slate-300 accent-brand-navy" />
+                    <span className="min-w-0 flex-1">{option.label}</span>
+                    <span className="rounded-full bg-[#f4f3ff] px-2 py-0.5 text-[0.68rem] text-slate-500">{option.count}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset className="mt-5 border-t border-slate-100 pt-5">
+              <legend className="text-xs font-bold uppercase tracking-[0.08em] text-slate-700">Eje de acción</legend>
+              <div className="mt-3 space-y-2.5">
+                {axisOptions.map((value) => (
+                  <label key={value} className="flex cursor-pointer items-center gap-2.5 text-sm text-slate-600">
+                    <input type="checkbox" checked={selectedAxes.includes(value)} onChange={() => toggleValue(value, selectedAxes, setSelectedAxes)} className="h-4 w-4 border-slate-300 accent-brand-navy" /> {value}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset className="mt-5 border-t border-slate-100 pt-5">
+              <div className="flex items-start justify-between gap-3"><legend className="max-w-32 text-xs font-bold uppercase leading-4 tracking-[0.08em] text-slate-700">Habilidades y herramientas</legend><span className="text-right text-[0.68rem] leading-4 text-slate-400">Filtrar por competencias</span></div>
+              <div className="relative mt-3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+                <input value={skillSearch} onChange={(event) => setSkillSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addSkill(skillSearch); } }} className="h-10 w-full rounded-lg border border-slate-200 bg-[#f7f6ff] pl-9 pr-9 text-xs" placeholder="Buscar habilidad o tecnología" />
+                <button type="button" onClick={() => addSkill(skillSearch)} className="absolute right-2 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full text-slate-500" aria-label="Agregar habilidad"><Plus size={15} /></button>
+              </div>
+              <div className="mt-3 flex items-center justify-between text-[0.68rem] text-slate-500"><span>Seleccionadas ({selectedSkills.length})</span><button type="button" onClick={() => setSelectedSkills([])} className="underline">Quitar todas</button></div>
+              <div className="mt-2 flex flex-wrap gap-1.5">{selectedSkills.map((skill) => <button type="button" key={skill} onClick={() => setSelectedSkills(selectedSkills.filter((item) => item !== skill))} className="inline-flex items-center gap-1 rounded-full bg-brand-navy px-2.5 py-1 text-[0.68rem] font-semibold text-white">{skill}<X size={11} /></button>)}</div>
+              <p className="mt-4 text-[0.68rem] font-semibold text-slate-500">Sugerencias populares</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">{suggestedSkills.map((skill) => <button type="button" key={skill} onClick={() => addSkill(skill)} className="rounded-md bg-[#f4f3ff] px-2.5 py-1 text-[0.68rem] text-slate-600">+ {skill}</button>)}</div>
+            </fieldset>
+
+            <fieldset className="mt-5 border-t border-slate-100 pt-5">
+              <legend className="text-xs font-bold uppercase tracking-[0.08em] text-slate-700">Modalidad de trabajo</legend>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {[{ value: "Remota", icon: Laptop }, { value: "Híbrida", icon: Building2 }, { value: "Presencial", icon: MapPin }].map(({ value, icon: Icon }) => {
+                  const active = selectedModes.includes(value);
+                  return <button type="button" key={value} onClick={() => toggleValue(value, selectedModes, setSelectedModes)} className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg border px-1.5 py-2 text-[0.68rem] font-semibold ${active ? "border-brand-navy bg-brand-navy text-white" : "border-transparent bg-[#f4f3ff] text-slate-600"}`}><Icon size={15} />{value}</button>;
+                })}
+              </div>
+            </fieldset>
+
+            <button type="button" onClick={applyFilters} className="mt-6 w-full rounded-lg bg-brand-navy px-4 py-3 text-sm font-semibold text-white">Aplicar filtros ({offers.length})</button>
+          </aside>
+
+          <div className="rounded-xl bg-brand-navy p-5 text-white">
+            <CheckCircle2 size={20} className="text-brand-gold" />
+            <p className="mt-4 text-xs font-bold uppercase tracking-[0.08em] text-brand-gold">Publicación empresarial</p>
+            <h2 className="mt-1 text-lg font-bold">Empresas aprobadas</h2>
+            <p className="mt-2 text-xs leading-5 text-slate-300">Solo las empresas que completan la revisión administrativa pueden publicar oportunidades.</p>
           </div>
-          <div className="mt-5 border-t border-slate-100 pt-5"><p className="text-sm font-semibold text-slate-700">Eje de acción</p><div className="mt-3 space-y-2.5">{['Ciencia y tecnología', 'Industria y energía', 'Salud', 'Educación'].map((value) => <label key={value} className="flex items-center gap-2.5 text-sm text-slate-600"><input type="checkbox" className="h-4 w-4 rounded border-slate-300 accent-brand-navy" /> {value}</label>)}</div></div>
-          <button className="mt-6 w-full rounded-lg bg-brand-navy px-4 py-3 text-sm font-semibold text-white">Aplicar filtros</button>
-        </aside>
+        </div>
 
         <section>
           <div className="relative mb-5">
