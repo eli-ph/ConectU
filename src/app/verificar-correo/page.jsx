@@ -1,0 +1,7 @@
+import Link from "next/link";
+import { MailCheck } from "lucide-react";
+import { AuthCard, AuthShell } from "@/components/auth-shell";
+import { primaryButton, secondaryButton } from "@/components/dashboard-ui";
+
+export const metadata = { title: "Verifica tu correo" };
+export default function VerifyEmailPage() { return <AuthShell><AuthCard eyebrow="Último paso" title="Verifica tu correo electrónico" description="Enviamos un código de verificación a la dirección registrada."><span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-brand-navy text-brand-gold"><MailCheck size={28} /></span><div className="mt-6 rounded-lg bg-[#eeefff] px-4 py-3 text-center text-sm text-brand-navy">correo@institucion.mx</div><div className="mt-6 flex justify-center gap-2">{[4,8,2,1,9].map((digit, index) => <input key={index} defaultValue={digit} aria-label={`Dígito ${index + 1}`} className="h-12 w-11 rounded-lg border border-slate-300 text-center text-lg font-bold text-brand-navy" maxLength="1" />)}</div><p className="mt-4 text-center text-xs text-slate-500">El código tiene una vigencia limitada por seguridad.</p><Link href="/ingresar" className={`${primaryButton} mt-6 w-full`}>Verificar código</Link><button className={`${secondaryButton} mt-3 w-full`}>Reenviar código</button><p className="mt-5 text-center text-sm"><Link href="/registro" className="font-semibold text-brand-navy">Volver al registro</Link></p></AuthCard></AuthShell>; }
