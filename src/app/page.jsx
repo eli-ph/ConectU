@@ -51,11 +51,11 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="border-b border-slate-200 bg-white">
-          <div className="container-page grid gap-3 py-4 sm:grid-cols-3">
-            <TrustStat value="4" label="tipos de oportunidad" />
-            <TrustStat value="1" label="CV vigente por estudiante" />
-            <TrustStat value="$0" label="para estudiantes" />
+        <section className="bg-brand-navy-dark pb-12">
+          <div className="container-page grid max-w-4xl gap-4 sm:grid-cols-3">
+            <TrustStat value="4" label="Tipos de oportunidad" note="Empleo, becariado, prácticas y servicio social" />
+            <TrustStat value="1" label="CV vigente por estudiante" note="Se reemplaza cuando el estudiante lo actualiza" />
+            <TrustStat value="$0" label="Acceso para estudiantes" note="Registro, búsqueda y postulaciones gratuitas" />
           </div>
         </section>
 
@@ -93,7 +93,7 @@ export default function HomePage() {
   );
 }
 
-function TrustStat({ value, label }) { return <div className="flex items-center justify-center gap-3 px-4 py-2 text-center"><span className="text-2xl font-bold tracking-[-0.04em] text-brand-navy">{value}</span><span className="max-w-28 text-xs leading-4 text-slate-500">{label}</span></div>; }
+function TrustStat({ value, label, note }) { return <article className="rounded-xl border border-white/15 bg-white/95 px-5 py-5 text-center shadow-xl"><p className="text-3xl font-bold tracking-[-0.04em] text-brand-navy">{value}</p><p className="mt-1 text-sm font-medium text-slate-600">{label}</p><p className="mt-3 border-t border-slate-200 pt-3 text-[0.7rem] leading-4 text-[#8a6a1c]">{note}</p></article>; }
 function StepCard({ icon: Icon, title, text }) { return <article className="rounded-xl border border-slate-200 bg-white p-6"><span className="grid h-10 w-10 place-items-center rounded-lg bg-[#eef0ff] text-brand-navy"><Icon size={19} /></span><h3 className="mt-7 text-lg font-bold text-brand-navy">{title}</h3><p className="mt-3 text-sm leading-6 text-slate-600">{text}</p><div className="mt-7 flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs font-medium text-slate-500"><CheckCircle2 size={15} className="text-brand-gold" /> Flujo integrado en la plataforma</div></article>; }
 function CompanyMetric({ icon: Icon, label, value }) { return <div className="flex items-center gap-3 rounded-lg bg-white p-3 text-brand-navy"><span className="grid h-9 w-9 place-items-center rounded-lg bg-brand-navy text-brand-gold"><Icon size={17} /></span><span><span className="block text-sm font-semibold">{label}</span><span className="block text-xs text-slate-500">{value}</span></span></div>; }
 function Pillar({ icon: Icon, title, text }) { return <article className="rounded-xl bg-page p-6"><span className="grid h-10 w-10 place-items-center rounded-lg bg-brand-navy text-brand-gold"><Icon size={19} /></span><h3 className="mt-5 font-bold text-brand-navy">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{text}</p></article>; }
