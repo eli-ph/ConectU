@@ -104,7 +104,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
   }, [open]);
 
   if (!open) return null;
-  const widths = { md: "max-w-lg", lg: "max-w-2xl", xl: "max-w-4xl" };
+  const widths = { md: "max-w-lg", lg: "max-w-2xl", xl: "max-w-4xl", wide: "max-w-[1120px]" };
 
   return (
     <div className="fixed inset-0 z-[80] grid place-items-center bg-brand-navy-dark/60 p-3 backdrop-blur-[3px] sm:p-6">

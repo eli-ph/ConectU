@@ -237,3 +237,21 @@ svg {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* Tablas de paneles: patrón visual compartido en estudiante, empresa y administración. */
+.conectu-table { width: 100%; border-collapse: collapse; text-align: left; }
+.conectu-table thead { background: #f3f6fc; }
+.conectu-table th { color: #52627d; font-size: .69rem; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
+.conectu-table td { vertical-align: middle; border-bottom: 1px solid #edf1f6; }
+.conectu-table tbody tr { transition: background-color .15s ease; }
+.conectu-table tbody tr:hover { background-color: #f8fafd; }
+.conectu-table tbody tr:last-child td { border-bottom: 0; }
+.conectu-page-button, nav[aria-label*="Paginación"] button { display: inline-flex; align-items: center; justify-content: center; min-width: 34px; min-height: 34px; border: 1px solid #e2e8f0; border-radius: .55rem; padding: .25rem .45rem; background: #fff; color: #142b49; font-size: .75rem; font-weight: 700; }
+.conectu-page-button:hover:not(:disabled), nav[aria-label*="Paginación"] button:hover:not(:disabled) { background: #eef2f9; }
+.conectu-page-button[aria-current="page"], .conectu-page-active, nav[aria-label*="Paginación"] button[aria-current="page"] { background: #142b49; color: white; border-color: #142b49; }
+.conectu-page-button:disabled, nav[aria-label*="Paginación"] button:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Los controles numéricos antiguos de tablas usan la misma superficie/altura que TablePagination. */
+button[aria-label="Página anterior"], button[aria-label="Página siguiente"] { min-width: 34px; min-height: 34px; border: 1px solid #e2e8f0; border-radius: .55rem; background-color: #fff; color: #142b49; }
+button[aria-label="Página anterior"]:hover:not(:disabled),button[aria-label="Página siguiente"]:hover:not(:disabled) { background-color: #eef2f9; }
+button[aria-label="Página anterior"]:disabled,button[aria-label="Página siguiente"]:disabled { opacity: .4; }

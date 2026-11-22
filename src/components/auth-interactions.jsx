@@ -2,6 +2,8 @@
 
 import { useId, useState } from "react";
 import { Eye, EyeOff, LockKeyhole } from "lucide-react";
+import { checkPassword } from "@/lib/password-policy";
+import { PasswordStrength } from "@/components/password-strength";
 
 /** Solo controla la interfaz. El envío real se conectará al servidor. */
 export function AuthForm({ children, className = "", actionLabel = "este formulario" }) {
@@ -10,6 +12,10 @@ export function AuthForm({ children, className = "", actionLabel = "este formula
   function handleSubmit(event) {
     event.preventDefault();
     const values = new FormData(event.currentTarget);
+    if (values.has("confirm_password") && !checkPassword(String(values.get("password") || "")).valid) {
+      setFeedback("La contraseña debe cumplir los cinco requisitos de seguridad.");
+      return;
+    }
     if (values.has("confirm_password") && values.get("password") !== values.get("confirm_password")) {
       setFeedback("Las contraseñas no coinciden. Revisa ambos campos.");
       return;
@@ -29,9 +35,13 @@ export function AuthForm({ children, className = "", actionLabel = "este formula
   );
 }
 
-export function PasswordControl({ label = "Contraseña", name, autoComplete = "new-password", hint, placeholder = "Ingresa tu contraseña", required = true }) {
+export function PasswordControl({ label = "Contraseña", name, autoComplete = "new-password", hint, placeholder = "Ingresa tu contraseña", required = true, value, onChange, showStrength = false }) {
   const id = useId();
   const [visible, setVisible] = useState(false);
+  const [internalValue, setInternalValue] = useState("");
+  const password = value ?? internalValue;
+  const setPassword = onChange ?? setInternalValue;
+  const isNewPassword = autoComplete !== "current-password" && name === "password";
   return (
     <div className="min-w-0">
       <label htmlFor={id} className="mb-2 block text-sm font-semibold text-slate-800">{label}</label>
@@ -42,7 +52,9 @@ export function PasswordControl({ label = "Contraseña", name, autoComplete = "n
           name={name}
           type={visible ? "text" : "password"}
           required={required}
-          minLength={8}
+          minLength={isNewPassword ? 8 : undefined}
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
           autoComplete={autoComplete}
           placeholder={placeholder}
           className="ui-control h-12"
@@ -59,6 +71,7 @@ export function PasswordControl({ label = "Contraseña", name, autoComplete = "n
         </button>
       </div>
       {hint && <p className="mt-1.5 text-xs leading-5 text-slate-500">{hint}</p>}
+      {isNewPassword && showStrength && <div className="mt-3"><PasswordStrength password={password} compact /></div>}
     </div>
   );
 }

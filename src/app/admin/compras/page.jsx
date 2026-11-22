@@ -282,7 +282,7 @@ export default function AdminPurchasesPage() {
         </div>
 
         <div className="hidden overflow-x-auto xl:block">
-          <table className="w-full min-w-[880px] border-collapse text-left text-xs">
+          <table className="conectu-table w-full min-w-[880px] border-collapse text-left text-xs">
             <thead className="border-y border-slate-200 bg-[#f6f7fd] text-[10px] font-bold uppercase tracking-[0.055em] text-slate-600">
               <tr>
                 <th scope="col" className="w-[27%] px-5 py-3.5">Empresa</th>

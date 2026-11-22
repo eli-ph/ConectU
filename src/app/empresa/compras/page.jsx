@@ -144,7 +144,7 @@ export default function CompanyPurchasesPage() {
 
         {/* Tabla */}
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
+          <table className="conectu-table w-full border-collapse text-left">
             <thead>
               <tr className="border-b border-slate-200/70 bg-slate-50/60 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                 <th className="px-5 py-3">FECHA Y HORA</th>

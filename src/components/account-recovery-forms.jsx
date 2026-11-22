@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ArrowRight, Check, CircleCheck, Eye, EyeOff, Mail, RefreshCcw, ShieldCheck } from "lucide-react";
+import { ArrowRight, CircleCheck, Eye, EyeOff, Mail, RefreshCcw, ShieldCheck } from "lucide-react";
+import { PasswordStrength } from "@/components/password-strength";
+import { checkPassword } from "@/lib/password-policy";
 
 function Feedback({ children }) {
   if (!children) return null;
@@ -172,14 +174,9 @@ export function ResetPasswordForm() {
   const [visibleConfirm, setVisibleConfirm] = useState(false);
   const [feedback, setFeedback] = useState("");
 
-  const checks = [
-    { label: "Mínimo 8 caracteres", valid: password.length >= 8 },
-    { label: "Una mayúscula", valid: /[A-Z]/.test(password) },
-    { label: "Un número o símbolo", valid: /[0-9]|[^A-Za-z0-9\s]/.test(password) },
-  ];
-  const score = checks.filter((item) => item.valid).length;
+  const strength = checkPassword(password);
   const matches = confirmation.length > 0 && password === confirmation;
-  const ready = score === checks.length && matches;
+  const ready = strength.valid && matches;
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -197,23 +194,7 @@ export function ResetPasswordForm() {
         <PasswordField id="confirm-password" label="Confirmar contraseña" value={confirmation} onChange={(value) => { setConfirmation(value); setFeedback(""); }} visible={visibleConfirm} onToggle={() => setVisibleConfirm(!visibleConfirm)} />
       </div>
       <div className="mt-6">
-        <div className="flex items-center justify-between gap-3 text-xs text-slate-600">
-          <span className="font-semibold">Requisitos de contraseña</span>
-          <span className="font-semibold text-brand-gold-dark">{score === 0 ? "Sin completar" : `${score} de 3 cumplidos`}</span>
-        </div>
-        <div className="mt-2 grid grid-cols-3 gap-1.5" aria-label={`${score} de 3 requisitos cumplidos`}>
-          {[0, 1, 2].map((index) => <span key={index} className={`h-1.5 rounded-full ${index < score ? "bg-brand-gold" : "bg-[#e5e9f8]"}`} />)}
-        </div>
-        <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-600">
-          {checks.map(({ label, valid }) => (
-            <li key={label} className={`flex items-center gap-1.5 ${valid ? "text-emerald-700" : "text-slate-500"}`}>
-              <span className={`grid h-4 w-4 place-items-center rounded-full border ${valid ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-400"}`}>
-                {valid && <Check size={11} strokeWidth={3} aria-hidden="true" />}
-              </span>
-              {label}
-            </li>
-          ))}
-        </ul>
+        <PasswordStrength password={password} />
         {confirmation && <p className={`mt-3 text-xs ${matches ? "text-emerald-700" : "text-rose-700"}`} aria-live="polite">
           {matches ? "Las contraseñas coinciden." : "Las contraseñas no coinciden."}
         </p>}

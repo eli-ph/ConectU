@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { SkillPicker } from "@/components/skill-picker";
 import {
   ArrowRight,
   Award,
@@ -27,28 +28,28 @@ import {
 
 const offerTypes = [
   {
-    id: "practicas",
-    title: "Prácticas Prof.",
-    subtitle: "6 a 12 meses",
-    icon: Briefcase,
-  },
-  {
-    id: "trainee",
-    title: "Empleo Trainee",
-    subtitle: "Graduados / Senior",
+    id: "empleo",
+    title: "Empleo",
+    subtitle: "Nivel inicial",
     icon: GraduationCap,
   },
   {
-    id: "beca",
-    title: "Beca Técnica",
-    subtitle: "I+D Aplicada",
+    id: "internships",
+    title: "Internships",
+    subtitle: "Programa formativo",
     icon: Sparkles,
   },
   {
     id: "servicio",
-    title: "Servicio Social",
+    title: "Servicio social",
     subtitle: "Horas oficiales",
     icon: Award,
+  },
+  {
+    id: "practicas",
+    title: "Prácticas profesionales",
+    subtitle: "6 a 12 meses",
+    icon: Briefcase,
   },
 ];
 
@@ -71,9 +72,9 @@ const initialAttachments = [
 
 export function CompanyOfferForm() {
   const [title, setTitle] = useState(
-    "Ingeniero Trainee de Sistemas Embebidos & IoT"
+    "Ingeniero de Sistemas Embebidos e IoT"
   );
-  const [selectedType, setSelectedType] = useState("trainee");
+  const [selectedType, setSelectedType] = useState("empleo");
   const [modality, setModality] = useState("Presencial");
   const [location, setLocation] = useState(
     "Parque Tecnológico Querétaro, Edificio Alfa - Lab de Hardware 03"
@@ -92,28 +93,17 @@ export function CompanyOfferForm() {
     "KiCad EDA",
     "Protocolo MQTT & TLS",
   ]);
-  const [skillInput, setSkillInput] = useState("");
+
   const [minCredits, setMinCredits] = useState(70);
 
   const [stipend, setStipend] = useState("12,500.00");
   const [vacancies, setVacancies] = useState(3);
   const [deadline, setDeadline] = useState("2025-05-30");
-  const [socialHours, setSocialHours] = useState("480 Horas Oficiales");
-  const [officialKey, setOfficialKey] = useState("SS-ING-2025-042-QRO");
+  const [socialHours, setSocialHours] = useState("480 horas");
+  const [officialKey, setOfficialKey] = useState("");
 
   const [attachments, setAttachments] = useState(initialAttachments);
   const [statusMessage, setStatusMessage] = useState("");
-
-  const handleAddSkill = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      const cleaned = skillInput.trim();
-      if (cleaned && !skills.includes(cleaned)) {
-        setSkills((prev) => [...prev, cleaned]);
-      }
-      setSkillInput("");
-    }
-  };
 
   const handleRemoveSkill = (tag) => {
     setSkills((prev) => prev.filter((item) => item !== tag));
@@ -405,38 +395,10 @@ export function CompanyOfferForm() {
             </select>
           </div>
 
-          {/* Herramientas y tecnologías clave */}
+          {/* Selector compartido con el catálogo: búsqueda arriba y etiquetas debajo. */}
           <div>
-            <label className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-slate-600">
-              HERRAMIENTAS Y TECNOLOGÍAS CLAVE REQUERIDAS
-            </label>
-            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 focus-within:border-brand-navy">
-              {skills.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-brand-navy px-2.5 py-1 text-xs font-semibold text-white"
-                >
-                  {tag}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveSkill(tag)}
-                    aria-label={`Quitar ${tag}`}
-                    className="rounded-full p-0.5 text-slate-300 transition hover:bg-white/15 hover:text-white"
-                  >
-                    <X size={12} />
-                  </button>
-                </span>
-              ))}
-
-              <input
-                type="text"
-                value={skillInput}
-                onChange={(e) => setSkillInput(e.target.value)}
-                onKeyDown={handleAddSkill}
-                placeholder="+ Ingresar etiqueta (Presiona Enter)"
-                className="min-w-[210px] flex-1 bg-transparent px-1.5 py-1 text-xs text-slate-700 outline-none"
-              />
-            </div>
+            <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-600">HERRAMIENTAS Y TECNOLOGÍAS REQUERIDAS</h3>
+            <SkillPicker skills={skills} onChange={setSkills} label="Busca las tecnologías que requiere esta oferta" />
           </div>
 
           {/* Créditos mínimos requeridos */}
@@ -553,17 +515,17 @@ export function CompanyOfferForm() {
           </p>
         </div>
 
-        {/* Bloque Acreditación Oficial de Servicio Social / Prácticas */}
-        <div className="mt-6 rounded-2xl border border-indigo-100 bg-[#f7f8ff] p-4 sm:p-5">
+        {/* Datos aplicables solo a prácticas y servicio social. */}
+        {(selectedType === "practicas" || selectedType === "servicio") && <div className="mt-6 rounded-2xl border border-indigo-100 bg-[#f7f8ff] p-4 sm:p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <ShieldCheck size={16} className="text-indigo-700" />
               <h3 className="text-xs font-bold text-brand-navy sm:text-sm">
-                Acreditación Oficial de Servicio Social / Prácticas
+                Datos de prácticas profesionales / servicio social
               </h3>
             </div>
             <span className="rounded-md bg-[#e6e8ff] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-800">
-              DGESU COMPLIANT
+              Según la convocatoria
             </span>
           </div>
 
@@ -582,7 +544,7 @@ export function CompanyOfferForm() {
 
             <div>
               <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                CLAVE OFICIAL ANTE DIRECCIÓN UNIVERSITARIA
+                CLAVE DEL PROGRAMA (SI APLICA)
               </label>
               <input
                 type="text"
@@ -592,7 +554,7 @@ export function CompanyOfferForm() {
               />
             </div>
           </div>
-        </div>
+        </div>}
       </section>
 
       {/* 4. Documentación Oficial y Anexos Técnicos */}

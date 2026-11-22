@@ -197,7 +197,7 @@ export default function AdminUsersPage() {
 
       <section aria-label="Listado de usuarios" className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_5px_24px_rgba(20,43,73,0.045)]">
         <div className="hidden overflow-x-auto lg:block">
-          <table className="w-full min-w-[940px] border-collapse text-left text-[12px]">
+          <table className="conectu-table w-full min-w-[940px] border-collapse text-left text-[12px]">
             <thead className="bg-[#f1f3fc] text-[10px] font-bold uppercase tracking-[0.05em] text-slate-600">
               <tr>
                 <th scope="col" className="px-4 py-4">Usuario e identificador</th>

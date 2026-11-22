@@ -141,16 +141,6 @@ export function DashboardShell({
         ))}
       </nav>
 
-      {role === "estudiante" && (
-        <div className="mx-4 mb-4 rounded-2xl border border-brand-gold/20 bg-brand-gold-soft p-4">
-          <p className="text-xs font-bold text-brand-navy">
-            Acceso estudiantil gratuito
-          </p>
-          <p className="mt-2 text-xs leading-5 text-slate-600">
-            Consulta ofertas y postúlate sin costo.
-          </p>
-        </div>
-      )}
       <div className="border-t border-slate-100 p-3">
         <Link
           href={`/${role}/cuenta`}

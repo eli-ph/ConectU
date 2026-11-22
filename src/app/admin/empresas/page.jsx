@@ -201,7 +201,7 @@ export default function AdminCompaniesPage() {
                 ))}
               </div>
               <div className="hidden overflow-x-auto sm:block">
-                <table className="w-full min-w-[700px] text-left text-sm">
+                <table className="conectu-table w-full min-w-[700px] text-left text-sm">
                   <thead className="border-b border-slate-200 bg-[#f4f6fb] text-xs font-semibold uppercase tracking-[0.045em] text-slate-500">
                     <tr>
                       <th scope="col" className="px-5 py-4 sm:px-6">Empresa</th>

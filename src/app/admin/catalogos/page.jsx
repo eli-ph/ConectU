@@ -252,7 +252,7 @@ export default function AdminCatalogsPage() {
             </div>
 
             <div className="hidden overflow-x-auto md:block">
-              <table className="w-full table-fixed text-left text-[12px]">
+              <table className="conectu-table w-full table-fixed text-left text-[12px]">
                 <thead className="border-b border-slate-200 bg-[#f7f9fc] text-[10px] font-bold uppercase tracking-[0.06em] text-slate-500">
                   <tr>
                     <th className="w-[25%] px-3 py-3">{tab === "habilidades" ? "Habilidad técnica" : tab === "facultades" ? "Facultad / unidad" : tab === "carreras" ? "Carrera universitaria" : "Eje de acción"}</th>

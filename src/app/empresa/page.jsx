@@ -29,8 +29,8 @@ import {
 import { DashboardShell } from "@/components/dashboard-shell";
 
 export default function CompanyDashboard() {
-  const [accountStatus, setAccountStatus] = useState("approved"); // "approved" | "pending"
-  const isApproved = accountStatus === "approved";
+  // El estado real llegará de la sesión empresarial al integrar el backend.
+  const isApproved = true;
 
   return (
     <DashboardShell
@@ -39,46 +39,6 @@ export default function CompanyDashboard() {
       badge="CORPORATIVO"
       hidePageHeader
     >
-      {/* Barra superior de simulación de estado institucional */}
-      <div className="mb-5 flex flex-col justify-between gap-3 rounded-2xl border border-indigo-100 bg-[#eeefff]/80 px-5 py-3.5 lg:flex-row lg:items-center">
-        <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm">
-          <span className="flex items-center gap-2 font-bold text-brand-navy">
-            <SlidersHorizontal size={16} className="text-indigo-600" />
-            Vista de simulación de cuenta corporativa:
-          </span>
-          <span className="text-slate-600">
-            Permite alternar entre los estados institucionales del comité universitario.
-          </span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setAccountStatus("approved")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
-              isApproved
-                ? "bg-brand-navy text-white shadow-sm"
-                : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-            }`}
-          >
-            <CheckCircle2 size={15} className={isApproved ? "text-brand-gold" : "text-slate-400"} />
-            Aprobada &amp; Activa
-          </button>
-          <button
-            type="button"
-            onClick={() => setAccountStatus("pending")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
-              !isApproved
-                ? "bg-amber-600 text-white shadow-sm"
-                : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-            }`}
-          >
-            <Hourglass size={15} className={!isApproved ? "text-white" : "text-amber-600"} />
-            En Revisión Institucional
-          </button>
-        </div>
-      </div>
-
       {/* Tarjeta de identidad corporativa */}
       <section className="flex flex-col justify-between gap-4 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs sm:flex-row sm:items-center">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">

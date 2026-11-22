@@ -1,15 +1,19 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import { ArrowRight, BookOpen, GraduationCap, LockKeyhole } from "lucide-react";
 import { AuthCard, AuthShell } from "@/components/auth-shell";
 import { AuthForm, PasswordControl } from "@/components/auth-interactions";
+import { PasswordStrength } from "@/components/password-strength";
 import { Field, inputClass } from "@/components/dashboard-ui";
 
-export const metadata = { title: "Registro de estudiante" };
 
 const faculties = ["Facultad de Ingeniería", "Facultad de Ciencias", "Facultad de Química", "FES Aragón", "FES Acatlán"];
 const careers = ["Ingeniería en Computación", "Ingeniería Eléctrica Electrónica", "Ingeniería Mecánica", "Ingeniería Industrial", "Ciencias de la Computación"];
 
 export default function StudentRegisterPage() {
+  const [password, setPassword] = useState("");
   return (
     <AuthShell wide>
       <AuthCard
@@ -35,8 +39,11 @@ export default function StudentRegisterPage() {
           <section>
             <SectionTitle icon={LockKeyhole} title="2. Seguridad de la cuenta" />
             <div className="grid gap-5 sm:grid-cols-2">
-              <PasswordControl name="password" hint="Mínimo 8 caracteres." />
+              <PasswordControl name="password" hint="Mínimo 8 caracteres." value={password} onChange={setPassword} />
               <PasswordControl label="Confirmar contraseña" name="confirm_password" placeholder="Repite tu contraseña" />
+              <div className="sm:col-span-2">
+                <PasswordStrength password={password} />
+              </div>
             </div>
           </section>
 

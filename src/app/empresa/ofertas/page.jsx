@@ -28,6 +28,8 @@ import {
   X,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { CompanyCandidatesModal } from "@/components/company-candidates-modal";
+import { TablePagination } from "@/components/table-pagination";
 
 const MONTHS_SHORT = [
   "Ene",
@@ -93,8 +95,8 @@ const initialOffers = [
     code: "ID: #VNC-2024-089",
     location: "Sede Monterrey / Híbrido",
     category: "Activas",
-    type: "Trainee Jr",
-    typeFilter: "Trainee",
+    type: "Empleo",
+    typeFilter: "Empleo",
     places: "3 plazas",
     applicantsMain: "48 candidatos",
     applicantsSub: "12 técnicos aptos",
@@ -116,8 +118,8 @@ const initialOffers = [
     code: "ID: #VNC-2024-094",
     location: "Planta San Luis Potosí / Presencial",
     category: "Activas",
-    type: "Prácticas",
-    typeFilter: "Prácticas",
+    type: "Prácticas profesionales",
+    typeFilter: "Prácticas profesionales",
     places: "2 plazas",
     applicantsMain: "31 candidatos",
     applicantsSub: "7 en entrevista",
@@ -127,7 +129,7 @@ const initialOffers = [
     deadlineUrgent: false,
     remainingLabel: "64 días vigentes",
     promoState: "available",
-    promoLabel: "+ Promocionar",
+    promoLabel: "Sin promoción",
     status: "Activa",
     statusTone: "green",
     icon: Cpu,
@@ -139,8 +141,8 @@ const initialOffers = [
     code: "ID: #VNC-2024-077",
     location: "Sede CDMX / Presencial",
     category: "Activas",
-    type: "Servicio Social",
-    typeFilter: "Servicio Social",
+    type: "Servicio social",
+    typeFilter: "Servicio social",
     places: "2 plazas",
     applicantsMain: "19 candidatos",
     applicantsSub: "Validando servicio",
@@ -150,7 +152,7 @@ const initialOffers = [
     deadlineUrgent: true,
     remainingLabel: "5 días vigentes",
     promoState: "available",
-    promoLabel: "+ Promocionar",
+    promoLabel: "Sin promoción",
     status: "Activa",
     statusTone: "green",
     icon: FlaskConical,
@@ -162,8 +164,8 @@ const initialOffers = [
     code: "ID: #VNC-2024-102",
     location: "Sede Guadalajara / Remoto parcial",
     category: "Activas",
-    type: "Beca",
-    typeFilter: "Beca",
+    type: "Internships",
+    typeFilter: "Internships",
     places: "2 plazas",
     applicantsMain: "44 candidatos",
     applicantsSub: "20 con posgrado afín",
@@ -185,8 +187,8 @@ const initialOffers = [
     code: "ID: #VNC-2024-D02",
     location: "Sin publicar (no consume cupo)",
     category: "Borradores",
-    type: "Trainee Jr",
-    typeFilter: "Trainee",
+    type: "Empleo",
+    typeFilter: "Empleo",
     places: "1 plaza",
     applicantsMain: "0 candidatos",
     applicantsSub: "",
@@ -208,8 +210,8 @@ const initialOffers = [
     code: "ID: #VNC-2024-032",
     location: "Cupo liberado el 10 Oct",
     category: "Inactivas",
-    type: "Prácticas",
-    typeFilter: "Prácticas",
+    type: "Prácticas profesionales",
+    typeFilter: "Prácticas profesionales",
     places: "3 plazas",
     applicantsMain: "52 postulados",
     applicantsSub: "3 contratados",
@@ -227,15 +229,9 @@ const initialOffers = [
   },
 ];
 
-const tabCounts = {
-  Todas: 16,
-  Activas: 8,
-  Inactivas: 6,
-  Borradores: 2,
-};
-
 export default function CompanyOffersPage() {
   const [offers, setOffers] = useState(initialOffers);
+  const tabCounts = { Todas: offers.length, Activas: offers.filter((item) => item.category === "Activas").length, Inactivas: offers.filter((item) => item.category === "Inactivas").length, Borradores: offers.filter((item) => item.category === "Borradores").length };
   const [tab, setTab] = useState("Activas");
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("Todos");
@@ -245,41 +241,12 @@ export default function CompanyOffersPage() {
   const [extendTarget, setExtendTarget] = useState(null);
   const [selectedDays, setSelectedDays] = useState(15);
 
-  const [editingOffer, setEditingOffer] = useState(null);
+  const [candidateOffer, setCandidateOffer] = useState(null);
+  const [pageSize, setPageSize] = useState(5);
 
   const openExtendModal = (offer) => {
     setExtendTarget(offer);
     setSelectedDays(15);
-  };
-
-  const openEditModal = (offer) => {
-    setEditingOffer({ ...offer });
-  };
-
-  const handleSaveEdit = (e) => {
-    e.preventDefault();
-    if (!editingOffer) return;
-
-    setOffers((prev) =>
-      prev.map((item) =>
-        item.id === editingOffer.id
-          ? {
-              ...item,
-              title: editingOffer.title,
-              type: editingOffer.type,
-              places: editingOffer.places,
-              location: editingOffer.location,
-              closingIso: editingOffer.closingIso,
-              deadlineMain:
-                editingOffer.deadlineMain === "Por definir" ||
-                editingOffer.deadlineMain === "Finalizada"
-                  ? editingOffer.deadlineMain
-                  : formatShortDeadline(editingOffer.closingIso),
-            }
-          : item
-      )
-    );
-    setEditingOffer(null);
   };
 
   const modalOptions = useMemo(() => {
@@ -354,29 +321,15 @@ export default function CompanyOffersPage() {
         return matchesTab && matchesType && matchesQuery;
       })
       .sort((a, b) => {
-        if (sortBy === "Más postulaciones") {
-          const numA = parseInt(a.applicantsMain, 10) || 0;
-          const numB = parseInt(b.applicantsMain, 10) || 0;
-          return numB - numA;
-        }
-        return 0;
+        const ta = a.closingIso ? Date.parse(`${a.closingIso}T00:00:00Z`) : Number.POSITIVE_INFINITY;
+        const tb = b.closingIso ? Date.parse(`${b.closingIso}T00:00:00Z`) : Number.POSITIVE_INFINITY;
+        return sortBy === "Vence: Más lejana" ? tb - ta : ta - tb;
       });
   }, [offers, tab, search, typeFilter, sortBy]);
 
-  const handlePromote = (id) => {
-    setOffers((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              promoState: "promoted",
-              promoLabel: "Promocionada (7d)",
-              actionKind: "promoted",
-            }
-          : item
-      )
-    );
-  };
+  const pageCount = Math.max(1, Math.ceil(visibleOffers.length / pageSize));
+  const safePage = Math.min(page, pageCount);
+  const pagedOffers = visibleOffers.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const handlePublish = (id) => {
     setOffers((prev) =>
@@ -388,7 +341,7 @@ export default function CompanyOffersPage() {
               status: "Activa",
               statusTone: "green",
               promoState: "available",
-              promoLabel: "+ Promocionar",
+              promoLabel: "Sin promoción",
               deadlineMain: formatShortDeadline(item.closingIso),
               deadlineSub: "60 días restantes",
               remainingLabel: "60 días vigentes",
@@ -409,7 +362,7 @@ export default function CompanyOffersPage() {
               status: "Activa",
               statusTone: "green",
               promoState: "available",
-              promoLabel: "+ Promocionar",
+              promoLabel: "Sin promoción",
               deadlineMain: formatShortDeadline(item.closingIso),
               deadlineSub: "75 días restantes",
               remainingLabel: "75 días vigentes",
@@ -439,7 +392,7 @@ export default function CompanyOffersPage() {
               Mis ofertas
             </h1>
             <span className="rounded-full bg-[#eeefff] px-3 py-1 text-xs font-semibold text-brand-navy">
-              8 de 10 ofertas activas
+              {tabCounts.Activas} de 10 ofertas activas
             </span>
           </div>
           <p className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500">
@@ -466,7 +419,7 @@ export default function CompanyOffersPage() {
               <button
                 key={item}
                 type="button"
-                onClick={() => setTab(item)}
+                onClick={() => { setTab(item); setPage(1); }}
                 className={`relative flex items-center gap-2 whitespace-nowrap pb-3 text-xs font-semibold transition sm:text-sm ${
                   active
                     ? "text-brand-navy"
@@ -498,7 +451,7 @@ export default function CompanyOffersPage() {
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               placeholder="Buscar por cargo, ID de convocatoria o especialidad técnica..."
               className="w-full bg-transparent text-xs text-slate-800 outline-none sm:text-sm"
             />
@@ -507,23 +460,23 @@ export default function CompanyOffersPage() {
           <div className="flex flex-wrap items-center gap-2.5">
             <select
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
+              onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
               className="select-chevron rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 outline-none transition focus:border-brand-navy"
             >
-              <option value="Todos">Tipo: Todos los esquema</option>
-              <option value="Trainee">Trainee Jr</option>
-              <option value="Prácticas">Prácticas</option>
-              <option value="Servicio Social">Servicio Social</option>
-              <option value="Beca">Beca</option>
+              <option value="Todos">Tipo: Todos</option>
+              <option value="Empleo">Empleo</option>
+              <option value="Internships">Internships</option>
+              <option value="Servicio social">Servicio social</option>
+              <option value="Prácticas profesionales">Prácticas profesionales</option>
             </select>
 
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
+              onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
               className="select-chevron rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 outline-none transition focus:border-brand-navy"
             >
               <option value="Vence: Más próxima">Vence: Más próxima</option>
-              <option value="Más postulaciones">Más postulaciones</option>
+              <option value="Vence: Más lejana">Vence: Más lejana</option>
             </select>
 
             <button
@@ -533,6 +486,7 @@ export default function CompanyOffersPage() {
                 setTypeFilter("Todos");
                 setSortBy("Vence: Más próxima");
                 setOffers(initialOffers);
+                setPage(1);
               }}
               aria-label="Actualizar listado"
               className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-brand-navy"
@@ -544,7 +498,7 @@ export default function CompanyOffersPage() {
 
         {/* Tabla de escritorio */}
         <div className="hidden overflow-x-auto xl:block">
-          <table className="w-full border-collapse text-left">
+          <table className="conectu-table w-full border-collapse text-left">
             <thead>
               <tr className="border-b border-slate-200/80 bg-slate-50/70 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 <th className="px-5 py-3">OFERTA / CONVOCATORIA</th>
@@ -558,7 +512,7 @@ export default function CompanyOffersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
-              {visibleOffers.map((offer) => {
+              {pagedOffers.map((offer) => {
                 const OfferIcon = offer.icon;
                 return (
                   <tr
@@ -639,16 +593,7 @@ export default function CompanyOffersPage() {
                           {offer.promoLabel}
                         </span>
                       )}
-                      {offer.promoState === "available" && (
-                        <button
-                          type="button"
-                          onClick={() => handlePromote(offer.id)}
-                          className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-indigo-700 transition hover:bg-[#eeefff]"
-                        >
-                          <Rocket size={12} />
-                          {offer.promoLabel}
-                        </button>
-                      )}
+                      {offer.promoState === "available" && <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">Sin promoción</span>}
                       {(offer.promoState === "inactive" ||
                         offer.promoState === "closed") && (
                         <span className="italic text-slate-400">
@@ -704,14 +649,9 @@ export default function CompanyOffersPage() {
 
                         {/* 1. Personitas -> Ver postulaciones / detalle */}
                         {offer.actionKind !== "publish" && (
-                          <Link
-                            href={`/empresa/ofertas/${offer.id}`}
-                            aria-label={`Postulantes de ${offer.title}`}
-                            title="Ver postulaciones"
-                            className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-brand-navy"
-                          >
+                          <button type="button" onClick={() => setCandidateOffer(offer)} aria-label={`Postulantes de ${offer.title}`} title="Ver postulantes" className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-brand-navy">
                             <Users size={15} />
-                          </Link>
+                          </button>
                         )}
 
                         {/* 2. Reloj -> Abre el modal de Extender Vigencia */}
@@ -729,15 +669,9 @@ export default function CompanyOffersPage() {
 
                         {/* 3. Lápiz -> Abre el modal de Editar Oferta */}
                         {offer.actionKind !== "reactivate" && (
-                          <button
-                            type="button"
-                            onClick={() => openEditModal(offer)}
-                            aria-label={`Editar ${offer.title}`}
-                            title="Editar oferta"
-                            className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-brand-navy"
-                          >
+                          <Link href={`/empresa/ofertas/${offer.id}/editar`} aria-label={`Editar ${offer.title}`} title="Editar oferta" className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-brand-navy">
                             <Pencil size={14} />
-                          </button>
+                          </Link>
                         )}
 
                         {offer.actionKind === "publish" && (
@@ -783,7 +717,7 @@ export default function CompanyOffersPage() {
 
         {/* Vista móvil / tablet */}
         <div className="divide-y divide-slate-100 xl:hidden">
-          {visibleOffers.map((offer) => {
+          {pagedOffers.map((offer) => {
             const OfferIcon = offer.icon;
             return (
               <article key={offer.id} className="p-4">
@@ -826,13 +760,7 @@ export default function CompanyOffersPage() {
                     {offer.deadlineMain}
                   </span>
                   <div className="flex items-center gap-3">
-                    <Link
-                      href={`/empresa/ofertas/${offer.id}`}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-brand-navy"
-                    >
-                      <Users size={13} />
-                      Postulantes
-                    </Link>
+                    <button type="button" onClick={() => setCandidateOffer(offer)} className="inline-flex items-center gap-1 text-xs font-semibold text-brand-navy"><Users size={13} />Postulantes</button>
                     <button
                       type="button"
                       onClick={() => openExtendModal(offer)}
@@ -841,14 +769,7 @@ export default function CompanyOffersPage() {
                       <Clock size={13} />
                       Vigencia
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => openEditModal(offer)}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-brand-navy"
-                    >
-                      <Pencil size={13} />
-                      Editar
-                    </button>
+                    <Link href={`/empresa/ofertas/${offer.id}/editar`} className="inline-flex items-center gap-1 text-xs font-semibold text-brand-navy"><Pencil size={13} />Editar</Link>
                   </div>
                 </div>
               </article>
@@ -856,45 +777,7 @@ export default function CompanyOffersPage() {
           })}
         </div>
 
-        {/* Pie de tabla: contador y paginación */}
-        <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-100 px-5 py-3.5 text-xs text-slate-500 sm:flex-row">
-          <p>
-            Mostrando <strong className="font-semibold text-slate-700">1 a 4</strong> de 4 convocatorias activas (16 registradas en histórico)
-          </p>
-
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              aria-label="Página anterior"
-              className="grid h-7 w-7 place-items-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"
-            >
-              <ChevronLeft size={14} />
-            </button>
-            {[1, 2].map((num) => (
-              <button
-                key={num}
-                type="button"
-                onClick={() => setPage(num)}
-                className={`h-7 w-7 rounded-lg text-xs font-bold transition ${
-                  page === num
-                    ? "bg-brand-navy text-white"
-                    : "border border-slate-200 text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                {num}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(2, p + 1))}
-              aria-label="Página siguiente"
-              className="grid h-7 w-7 place-items-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
-        </div>
+        <TablePagination page={safePage} pages={pageCount} onChange={setPage} total={visibleOffers.length} pageSize={pageSize} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} label="ofertas" />
       </section>
 
       {/* Banner inferior dorado de promoción */}
@@ -1068,179 +951,7 @@ export default function CompanyOffersPage() {
         </div>
       )}
 
-      {/* Modal 2: Editar Convocatoria */}
-      {editingOffer && (
-        <div className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/55 p-4 backdrop-blur-[2px]">
-          <button
-            type="button"
-            aria-label="Cerrar modal"
-            onClick={() => setEditingOffer(null)}
-            className="absolute inset-0 cursor-default"
-          />
-
-          <div className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-            <div className="flex items-start justify-between gap-4 px-6 pt-5 pb-4">
-              <div className="flex items-start gap-3.5">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-gold-soft text-[#9e7400]">
-                  <Pencil size={18} />
-                </span>
-                <div>
-                  <h2 className="text-base font-bold text-brand-navy sm:text-lg">
-                    Editar Convocatoria
-                  </h2>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    {editingOffer.code} • Modifica los datos principales de la vacante
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setEditingOffer(null)}
-                aria-label="Cerrar"
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveEdit} className="space-y-3.5 px-6 pb-6">
-              <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200/80 bg-slate-50/80 px-4 py-3">
-                <div>
-                  <p className="text-[11px] font-medium text-slate-500">
-                    Estado actual:
-                  </p>
-                  <p className="mt-0.5 text-sm font-bold text-brand-navy">
-                    {editingOffer.status}
-                  </p>
-                </div>
-
-                <div className="text-right">
-                  <p className="text-[11px] font-medium text-slate-500">
-                    Postulaciones registradas:
-                  </p>
-                  <p className="mt-0.5 text-sm font-bold text-[#9e7400]">
-                    {editingOffer.applicantsMain}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 rounded-xl border border-indigo-100/90 bg-[#f5f6ff] px-3.5 py-2.5 text-[11px] text-slate-600">
-                <Info size={14} className="shrink-0 text-indigo-600" />
-                <p>
-                  <strong className="font-bold text-brand-navy">
-                    Actualización inmediata:
-                  </strong>{" "}
-                  Los cambios en título, esquema, plazas o sede se reflejarán en el listado al guardar.
-                </p>
-              </div>
-
-              <div className="space-y-3 pt-0.5">
-                <div className="rounded-xl border border-slate-200/90 bg-white p-3.5">
-                  <label className="mb-1.5 block text-xs font-bold text-brand-navy">
-                    Título de la oferta
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={editingOffer.title}
-                    onChange={(e) =>
-                      setEditingOffer({ ...editingOffer, title: e.target.value })
-                    }
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2 text-xs font-medium text-slate-800 outline-none transition focus:border-brand-navy focus:bg-white sm:text-sm"
-                  />
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl border border-slate-200/90 bg-white p-3.5">
-                    <label className="mb-1.5 block text-xs font-bold text-brand-navy">
-                      Tipo de esquema
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={editingOffer.type}
-                      onChange={(e) =>
-                        setEditingOffer({ ...editingOffer, type: e.target.value })
-                      }
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2 text-xs font-medium text-slate-800 outline-none transition focus:border-brand-navy focus:bg-white"
-                    />
-                  </div>
-
-                  <div className="rounded-xl border border-slate-200/90 bg-white p-3.5">
-                    <label className="mb-1.5 block text-xs font-bold text-brand-navy">
-                      Plazas disponibles
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={editingOffer.places}
-                      onChange={(e) =>
-                        setEditingOffer({ ...editingOffer, places: e.target.value })
-                      }
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2 text-xs font-medium text-slate-800 outline-none transition focus:border-brand-navy focus:bg-white"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl border border-slate-200/90 bg-white p-3.5">
-                    <label className="mb-1.5 block text-xs font-bold text-brand-navy">
-                      Sede / Modalidad
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={editingOffer.location}
-                      onChange={(e) =>
-                        setEditingOffer({
-                          ...editingOffer,
-                          location: e.target.value,
-                        })
-                      }
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2 text-xs font-medium text-slate-800 outline-none transition focus:border-brand-navy focus:bg-white"
-                    />
-                  </div>
-
-                  <div className="rounded-xl border border-slate-200/90 bg-white p-3.5">
-                    <label className="mb-1.5 block text-xs font-bold text-brand-navy">
-                      Fecha de cierre
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      value={editingOffer.closingIso}
-                      onChange={(e) =>
-                        setEditingOffer({
-                          ...editingOffer,
-                          closingIso: e.target.value,
-                        })
-                      }
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2 text-xs font-medium text-slate-800 outline-none transition focus:border-brand-navy focus:bg-white"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-2.5 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEditingOffer(null)}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-xl bg-brand-navy px-4 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-brand-navy/90"
-                >
-                  Guardar cambios
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <CompanyCandidatesModal offer={candidateOffer} onClose={() => setCandidateOffer(null)} />
     </DashboardShell>
   );
 }

@@ -1,12 +1,16 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import { ArrowRight, Building2, ContactRound, LockKeyhole, ShieldCheck } from "lucide-react";
 import { AuthCard, AuthShell } from "@/components/auth-shell";
 import { AuthForm, PasswordControl } from "@/components/auth-interactions";
+import { PasswordStrength } from "@/components/password-strength";
 import { Field, inputClass, textareaClass } from "@/components/dashboard-ui";
 
-export const metadata = { title: "Registro de empresa" };
 
 export default function CompanyRegisterPage() {
+  const [password, setPassword] = useState("");
   return (
     <AuthShell wide>
       <div className="mb-7 text-center">
@@ -49,8 +53,11 @@ export default function CompanyRegisterPage() {
           <section>
             <SectionTitle icon={LockKeyhole} title="3. Credenciales de la cuenta" />
             <div className="grid gap-5 sm:grid-cols-2">
-              <PasswordControl name="password" hint="Mínimo 8 caracteres." />
+              <PasswordControl name="password" hint="Mínimo 8 caracteres." value={password} onChange={setPassword} />
               <PasswordControl label="Confirmar contraseña" name="confirm_password" placeholder="Repite tu contraseña" />
+              <div className="sm:col-span-2">
+                <PasswordStrength password={password} />
+              </div>
             </div>
           </section>
 

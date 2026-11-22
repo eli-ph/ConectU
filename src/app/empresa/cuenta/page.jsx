@@ -18,6 +18,8 @@ import {
   User,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { PasswordStrength } from "@/components/password-strength";
+import { checkPassword } from "@/lib/password-policy";
 
 const MAX_SUMMARY_LENGTH = 500;
 
@@ -27,47 +29,7 @@ export default function CompanyAccountPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [savedNotice, setSavedNotice] = useState("");
 
-  // Evaluación estricta de fortaleza: requiere los 3 criterios para ser "Segura"
-  const hasMinLength = newPassword.length >= 8;
-  const hasUppercase = /[A-Z]/.test(newPassword);
-  const hasNumberOrSymbol = /[0-9!@#$%^&*(),.?":{}|<>_\-+=\\/\[\];'`~]/.test(newPassword);
-
-  const criteriaCount = [hasMinLength, hasUppercase, hasNumberOrSymbol].filter(Boolean).length;
-
-  const getStrengthMeta = () => {
-    if (!newPassword || criteriaCount === 0) {
-      return {
-        label: "Sin definir",
-        barWidth: "w-0",
-        barColor: "bg-slate-200",
-        badgeColor: "text-slate-400",
-      };
-    }
-    if (criteriaCount === 1) {
-      return {
-        label: "Débil",
-        barWidth: "w-1/3",
-        barColor: "bg-rose-500",
-        badgeColor: "text-rose-600",
-      };
-    }
-    if (criteriaCount === 2) {
-      return {
-        label: "Media",
-        barWidth: "w-2/3",
-        barColor: "bg-amber-500",
-        badgeColor: "text-[#8b6600]",
-      };
-    }
-    return {
-      label: "Segura",
-      barWidth: "w-full",
-      barColor: "bg-emerald-500",
-      badgeColor: "text-emerald-700",
-    };
-  };
-
-  const strength = getStrengthMeta();
+  const passwordReady = !newPassword || (checkPassword(newPassword).valid && newPassword === confirmPassword);
 
   const handleSave = (e) => {
     e.preventDefault();
@@ -401,60 +363,8 @@ export default function CompanyAccountPage() {
             </div>
           </div>
 
-          {/* Barra de fortaleza y requerimientos de seguridad */}
-          <div className="mt-5 rounded-xl border border-slate-200/80 bg-slate-50/70 px-4 py-3.5">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold text-slate-600">
-                Nivel de seguridad de la contraseña
-              </span>
-              <span className={`text-xs font-bold ${strength.badgeColor}`}>
-                {strength.label}
-              </span>
-            </div>
-
-            {/* Barra de progreso */}
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200/80">
-              <div
-                className={`h-full rounded-full transition-all duration-300 ${strength.barWidth} ${strength.barColor}`}
-              />
-            </div>
-
-            <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-xs">
-              <span
-                className={`inline-flex items-center gap-1.5 ${
-                  hasMinLength ? "font-semibold text-[#8b6600]" : "text-slate-500"
-                }`}
-              >
-                <CheckCircle2
-                  size={14}
-                  className={hasMinLength ? "text-[#8b6600]" : "text-slate-300"}
-                />
-                Mínimo 8 caracteres
-              </span>
-              <span
-                className={`inline-flex items-center gap-1.5 ${
-                  hasUppercase ? "font-semibold text-[#8b6600]" : "text-slate-500"
-                }`}
-              >
-                <CheckCircle2
-                  size={14}
-                  className={hasUppercase ? "text-[#8b6600]" : "text-slate-300"}
-                />
-                Una mayúscula
-              </span>
-              <span
-                className={`inline-flex items-center gap-1.5 ${
-                  hasNumberOrSymbol ? "font-semibold text-[#8b6600]" : "text-slate-500"
-                }`}
-              >
-                <CheckCircle2
-                  size={14}
-                  className={hasNumberOrSymbol ? "text-[#8b6600]" : "text-slate-300"}
-                />
-                Un número o símbolo
-              </span>
-            </div>
-          </div>
+          <div className="mt-5"><PasswordStrength password={newPassword} /></div>
+          {newPassword && !passwordReady && <p role="status" className="mt-2 text-xs text-rose-700">Comprueba los cinco requisitos y que ambas contraseñas coincidan.</p>}
         </section>
 
         {/* Único botón Guardar cambios hasta abajo */}
@@ -462,6 +372,7 @@ export default function CompanyAccountPage() {
           <button
             type="button"
             onClick={handleSave}
+            disabled={!passwordReady}
             className="inline-flex items-center gap-2 rounded-xl bg-brand-navy px-5 py-2.5 text-xs font-semibold text-white shadow-xs transition hover:bg-brand-navy/90"
           >
             <Save size={15} />

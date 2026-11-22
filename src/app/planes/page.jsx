@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { PublicHeader } from "@/components/public-header";
 import { PublicFooter } from "@/components/public-footer";
+import { PLAN_CATALOG, PROMOTION_CATALOG, formatPrice, describePlanCapacity, describeIncludedPromotions } from "@/lib/commercial-catalog";
 
 export const metadata = {
   title: "Planes para empresas",
@@ -23,18 +24,14 @@ export const metadata = {
     "Conoce los planes empresariales y las promociones de ConectU. El registro estudiantil y sus funciones son gratuitos.",
 };
 
-const plans = [
+const planPresentation = [
   {
     id: "gratuito",
     eyebrow: "PARA COMENZAR",
     name: "Plan Gratuito",
     description: "Comparte oportunidades y administra tus postulaciones sin pagar.",
-    price: "$0",
-    period: "Sin costo",
-    capacity: "10 ofertas activas simultáneas",
-    promotions: "Sin promociones incluidas",
     icon: BriefcaseBusiness,
-    cta: "Comenzar gratis",
+    cta: "Entrar a mi cuenta",
     prominent: false,
   },
   {
@@ -42,12 +39,8 @@ const plans = [
     eyebrow: "PARA CRECER",
     name: "Plan Básico",
     description: "Más capacidad para organizaciones con varias convocatorias vigentes.",
-    price: "$99",
-    period: "MXN / 30 días",
-    capacity: "20 ofertas activas simultáneas",
-    promotions: "1 promoción incluida de 7 días",
     icon: Zap,
-    cta: "Registrar mi empresa",
+    cta: "Entrar a mi cuenta",
     prominent: true,
   },
   {
@@ -55,20 +48,15 @@ const plans = [
     eyebrow: "MAYOR CAPACIDAD",
     name: "Plan Premium",
     description: "Publica múltiples oportunidades sin una cuota numérica de ofertas activas.",
-    price: "$249",
-    period: "MXN / 30 días",
-    capacity: "Ofertas activas sin límite numérico",
-    promotions: "3 promociones incluidas de 7 días",
     icon: InfinityIcon,
-    cta: "Registrar mi empresa",
+    cta: "Entrar a mi cuenta",
     prominent: false,
   },
 ];
 
-const promotions = [
+const promotionPresentation = [
   {
     days: 7,
-    price: "$39",
     title: "7 días",
     description: "Visibilidad adicional durante una semana.",
     icon: Clock3,
@@ -76,7 +64,6 @@ const promotions = [
   },
   {
     days: 15,
-    price: "$69",
     title: "15 días",
     description: "Más tiempo de prioridad en búsquedas relacionadas.",
     icon: Sparkles,
@@ -85,13 +72,29 @@ const promotions = [
   },
   {
     days: 30,
-    price: "$119",
     title: "30 días",
     description: "Prioridad por un periodo prolongado, según la vigencia de la oferta.",
     icon: CalendarDays,
     tag: "MAYOR DURACIÓN",
   },
 ];
+
+
+const plans = planPresentation.map((view) => {
+  const plan = PLAN_CATALOG.find((item) => item.id === view.id);
+  return {
+    ...view,
+    price: formatPrice(plan.price),
+    period: plan.durationDays ? "MXN / 30 días" : "Sin costo",
+    capacity: describePlanCapacity(plan),
+    promotions: describeIncludedPromotions(plan),
+  };
+});
+
+const promotions = promotionPresentation.map((view) => {
+  const tariff = PROMOTION_CATALOG.find((item) => item.days === view.days);
+  return { ...view, price: formatPrice(tariff.price) };
+});
 
 const faq = [
   {
@@ -115,9 +118,14 @@ const faq = [
       "Sí. Una oferta puede incluir varias plazas y solo ocupa un espacio dentro del límite del plan. La cantidad de estudiantes aceptados no podrá superar las plazas indicadas para el ciclo.",
   },
   {
-    question: "¿Puedo comprar una promoción y elegir la oferta después?",
+    question: "¿Puedo comprar una promoción sin elegir una oferta?",
     answer:
-      "Sí. Las promociones adicionales se pueden adquirir sin asignarlas de inmediato. Una vez disponible, podrás vincularla a una oferta activa desde «Mi plan», cuando esa función esté implementada.",
+      "No. Desde «Plan y promociones» debes elegir una oferta activa con vigencia suficiente antes de pagar. La promoción se activa sobre esa oferta cuando se confirma el pago.",
+  },
+  {
+    question: "¿Cómo utilizo las promociones incluidas en mi plan?",
+    answer:
+      "Tu suscripción indica cuántas activaciones te quedan. Al seleccionar una oferta válida se consume una activación y nace la promoción asociada a esa oferta. Las activaciones no utilizadas vencen con el periodo del plan.",
   },
   {
     question: "¿Los planes se renuevan automáticamente?",
@@ -214,7 +222,7 @@ function PlanCard({ plan }) {
       </div>
 
       <Link
-        href="/registro/empresa"
+        href="/ingresar"
         className={`mt-7 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-center text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-gold ${
           plan.prominent
             ? "bg-brand-navy text-white hover:bg-brand-navy-light"
@@ -249,17 +257,17 @@ function PromotionCard({ promotion }) {
         <span className="text-xs font-medium text-slate-500">MXN</span>
       </div>
       <p className="mt-2 text-xs leading-5 text-slate-500">
-        Compra adicional, independiente de las promociones incluidas en tu plan.
+        Se contrata para una oferta específica, no se almacena para asignarla después.
       </p>
       <Link
-        href="/registro/empresa"
+        href="/ingresar"
         className={`mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-center text-sm font-semibold transition-colors ${
           promotion.featured
             ? "bg-brand-navy text-white hover:bg-brand-navy-light"
             : "bg-[#e9edf9] text-brand-navy hover:bg-[#dce4f8]"
         }`}
       >
-        Registrarme para comprar <ArrowRight size={16} aria-hidden="true" />
+        Ver en mi cuenta <ArrowRight size={16} aria-hidden="true" />
       </Link>
     </article>
   );
@@ -282,14 +290,14 @@ export default function PlansPage() {
                 Planes para empresas
               </h1>
               <p className="mx-auto mt-5 max-w-[680px] text-sm leading-7 text-slate-600 sm:text-base">
-                Elige cuántas ofertas puedes mantener activas al mismo tiempo y cuántas promociones incluye tu plan. Las funciones y estadísticas empresariales son iguales para todos.
+                Compara las capacidades de cada plan y las promociones de visibilidad. La contratación se realiza dentro del panel empresarial, donde podrás elegir qué oferta deseas destacar.
               </p>
             </div>
 
             <div className="mx-auto mt-7 flex max-w-[1000px] items-start gap-3 rounded-xl border border-[#dce4f4] bg-[#edf1fb] px-4 py-3 text-xs leading-5 text-[#334b6b] sm:items-center sm:px-5 sm:text-sm">
               <Info size={18} className="mt-0.5 shrink-0 sm:mt-0" aria-hidden="true" />
               <p>
-                <strong>Precios de referencia en MXN:</strong> aún no son tarifas comerciales definitivas. Los planes de pago duran 30 días, sin renovación automática. Solo las empresas aprobadas pueden contratar.
+                <strong>Contratación desde la cuenta empresarial.</strong> Los planes pagados duran 30 días con renovación manual. Para contratar planes y promociones la empresa debe estar aprobada. Precios ilustrativos en MXN.
               </p>
             </div>
 
@@ -297,7 +305,7 @@ export default function PlansPage() {
               {plans.map((plan) => <PlanCard key={plan.id} plan={plan} />)}
             </div>
             <p className="mt-4 text-center text-xs leading-5 text-slate-500">
-              Por ahora, los botones llevan al registro de empresa; la contratación y el cobro todavía no están habilitados.
+              Para contratar o renovar, inicia sesión y entra en «Plan y promociones» desde tu panel empresarial.
             </p>
           </div>
         </section>
@@ -306,8 +314,8 @@ export default function PlansPage() {
           <div className="mx-auto max-w-[1120px]">
             <SectionHeading
               eyebrow="Mayor visibilidad"
-              title="Compra de promociones adicionales"
-              description="Destaca una oferta en las búsquedas relevantes durante el periodo que elijas. Puedes comprar una promoción ahora y asignarla después a una oferta activa desde Mi plan."
+              title="Promociones adicionales por oferta"
+              description="Destaca una oferta concreta en las búsquedas relevantes durante el periodo que elijas. Primero seleccionas la oferta activa, después confirmas la compra desde tu panel empresarial."
             />
             <div className="mt-8 grid gap-5 md:grid-cols-3 md:gap-6">
               {promotions.map((promotion) => (
@@ -318,6 +326,25 @@ export default function PlansPage() {
               <Info size={16} className="mt-1 shrink-0" aria-hidden="true" />
               Promocionar prioriza una oferta que coincide con los filtros; no garantiza visitas, postulaciones o contrataciones.
             </p>
+          </div>
+        </section>
+
+        <section id="como-contratar" className="px-4 py-10 sm:px-6 sm:py-12" aria-labelledby="como-funciona">
+          <div className="mx-auto max-w-[1120px] rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <SectionHeading eyebrow="Una sola ruta de contratación" title="Así funcionan las promociones" description="No se compran promociones para guardarlas. El beneficio se vincula a la oferta en el momento de activarlo." />
+            <div className="mt-7 grid gap-4 md:grid-cols-3">
+              {[
+                ["1", "Ingresa a tu empresa", "Accede a Plan y promociones desde el panel de tu organización aprobada."],
+                ["2", "Elige oferta y duración", "Selecciona la oferta activa y una promoción incluida o adicional."],
+                ["3", "Confirma la operación", "Si es incluida, consumes una activación. Si es adicional, pagas y se activa al confirmarse el cobro."],
+              ].map(([step, title, description]) => (
+                <div key={step} className="rounded-xl bg-[#f7f9fc] px-5 py-5">
+                  <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-navy text-sm font-bold text-white">{step}</span>
+                  <h3 className="mt-4 text-base font-bold text-brand-navy">{title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import {
   Briefcase,
   CheckCircle2,
-  FileSpreadsheet,
+  CalendarDays,
   FileText,
   Filter,
   Megaphone,
@@ -14,6 +14,8 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { Modal } from "@/components/dashboard-ui";
+import { MonthRangeSelector } from "@/components/month-range-selector";
 
 const kpiCards = [
   {
@@ -33,7 +35,7 @@ const kpiCards = [
     label: "PLAZAS OFERTADAS",
     value: "14",
     unit: "cupos totales",
-    footerLeft: "Ciclo académico en curso",
+    footerLeft: "Durante el periodo seleccionado",
     footerRight: "2.8 prom./oferta",
     icon: Smile,
     iconBg: "bg-brand-gold-soft",
@@ -52,18 +54,7 @@ const kpiCards = [
     iconColor: "text-indigo-700",
     accentColor: "text-indigo-700",
   },
-  {
-    id: "accepted-candidates",
-    label: "CANDIDATOS ACEPTADOS",
-    value: "7",
-    unit: "formalizados",
-    footerLeft: "Tasa de cobertura",
-    footerRight: "50.0% de plazas",
-    icon: Tag,
-    iconBg: "bg-brand-gold-soft",
-    iconColor: "text-[#9e7400]",
-    accentColor: "text-[#8b6600]",
-  },
+
 ];
 
 const statusBreakdown = [
@@ -175,8 +166,31 @@ const weeklyPoints = [
   { label: "Sem 6", x: 373, y: 60, value: 22 },
 ];
 
+const monthNames = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const quickPeriods = ["Último mes", "Últimos 3 meses", "Últimos 6 meses", "Últimos 12 meses"];
+const compactMonthNames = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+function formatPeriodCompact(value) {
+  if (!value.startsWith("Rango personalizado · ")) return value;
+  return value.replace(/^Rango personalizado · /, "").replace(/enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre/g,
+    (month) => compactMonthNames[monthNames.indexOf(month)]).replace(" → ", " – ");
+}
+
+
+function formatMonthLabel(value) {
+  if (!value || !/^\d{4}-\d{2}$/.test(value)) return "";
+  const [year, month] = value.split("-");
+  const index = Number(month) - 1;
+  return `${monthNames[index] || month} ${year}`;
+}
+
+
 export default function CompanyStatsPage() {
-  const [period, setPeriod] = useState("Ciclo actual 2025-A");
+  const [period, setPeriod] = useState("Último mes");
+  const [periodDialogOpen, setPeriodDialogOpen] = useState(false);
+  const [draftPeriod, setDraftPeriod] = useState("Último mes");
+  const [customStart, setCustomStart] = useState("2026-10");
+  const [customEnd, setCustomEnd] = useState("2026-11");
   const [selectedOffer, setSelectedOffer] = useState("Todas las convocatorias");
   const [specialty, setSpecialty] = useState("Todas las especialidades");
   const [appliedBanner, setAppliedBanner] = useState("");
@@ -194,10 +208,28 @@ export default function CompanyStatsPage() {
   };
 
   const handleResetFilters = () => {
-    setPeriod("Ciclo actual 2025-A");
+    setPeriod("Último mes");
+    setDraftPeriod("Último mes");
     setSelectedOffer("Todas las convocatorias");
     setSpecialty("Todas las especialidades");
     setAppliedBanner("");
+  };
+
+  const periodSummary =
+    draftPeriod === "Personalizado"
+      ? `Rango personalizado · ${formatMonthLabel(customStart)} → ${formatMonthLabel(customEnd)}`
+      : draftPeriod;
+
+  const invalidCustomRange = draftPeriod === "Personalizado" && (!customStart || !customEnd || customStart > customEnd);
+
+  const applyPeriodSelection = () => {
+    if (invalidCustomRange) return;
+    if (draftPeriod === "Personalizado") {
+      setPeriod(`Rango personalizado · ${formatMonthLabel(customStart)} → ${formatMonthLabel(customEnd)}`);
+    } else {
+      setPeriod(draftPeriod);
+    }
+    setPeriodDialogOpen(false);
   };
 
   const linePath = weeklyPoints
@@ -238,31 +270,6 @@ export default function CompanyStatsPage() {
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-              <button
-                type="button"
-                onClick={() =>
-                  setAppliedBanner("Exportación CSV generada para el ciclo actual.")
-                }
-                className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-white/15"
-              >
-                <FileSpreadsheet size={15} />
-                Exportar CSV
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setAppliedBanner(
-                    "Informe Ejecutivo preparado con las métricas del ciclo."
-                  )
-                }
-                className="inline-flex items-center gap-2 rounded-xl bg-[#f5c22b] px-4 py-2.5 text-xs font-bold text-brand-navy shadow-xs transition hover:bg-[#e6b31e]"
-              >
-                <FileText size={15} />
-                Informe Ejecutivo
-              </button>
-            </div>
           </div>
         </section>
 
@@ -276,15 +283,16 @@ export default function CompanyStatsPage() {
               <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 PERÍODO DE EVALUACIÓN
               </label>
-              <select
-                value={period}
-                onChange={(e) => setPeriod(e.target.value)}
-                className="select-chevron w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-brand-navy outline-none transition focus:border-brand-navy"
+              <button
+                type="button"
+                onClick={() => setPeriodDialogOpen(true)}
+                aria-label={`Cambiar periodo de evaluación. Actual: ${period}`}
+                title={period}
+                className="flex min-h-11 w-full min-w-0 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-left text-sm font-semibold text-brand-navy outline-none transition hover:border-brand-navy/50 focus:border-brand-navy"
               >
-                <option value="Ciclo actual 2025-A">Ciclo actual 2025-A</option>
-                <option value="Últimos 30 días">Últimos 30 días</option>
-                <option value="Últimos 90 días">Últimos 90 días</option>
-              </select>
+                <span className="min-w-0 flex-1 truncate">{formatPeriodCompact(period)}</span>
+                <CalendarDays size={18} className="shrink-0 text-brand-navy" aria-hidden="true" />
+              </button>
             </div>
 
             <div>
@@ -357,7 +365,7 @@ export default function CompanyStatsPage() {
         </form>
 
         {/* 4 Tarjetas KPI Principales */}
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {kpiCards.map((card) => {
             const Icon = card.icon;
             return (
@@ -528,7 +536,7 @@ export default function CompanyStatsPage() {
               </h2>
               <p className="mt-0.5 text-xs text-slate-500">
                 Seguimiento semanal del flujo de expedientes recibidos durante
-                las primeras 6 semanas del ciclo actual.
+                las semanas incluidas en el periodo seleccionado.
               </p>
 
               <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/60 p-3.5">
@@ -652,6 +660,83 @@ export default function CompanyStatsPage() {
           </div>
         </section>
       </div>
+
+      <Modal
+        open={periodDialogOpen}
+        onClose={() => setPeriodDialogOpen(false)}
+        title="Seleccionar periodo de evaluación"
+        description="Elige el mes inicial y final, o utiliza un periodo rápido."
+        size="wide"
+        footer={(<>
+          <button
+            type="button"
+            onClick={() => setPeriodDialogOpen(false)}
+            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-brand-navy"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={applyPeriodSelection}
+            disabled={invalidCustomRange}
+            className="inline-flex min-h-10 items-center justify-center rounded-xl bg-brand-navy px-4 text-sm font-semibold text-white transition hover:bg-brand-navy/90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Aplicar periodo
+          </button>
+        </>)}
+      >
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3 sm:p-4">
+              <p className="text-sm font-semibold text-brand-navy">Rango específico</p>
+              <p className="mt-1 text-xs text-slate-500">Selecciona el mes inicial y el mes final para construir un rango personalizado.</p>
+              <div className="mt-4">
+                <MonthRangeSelector
+                  start={customStart}
+                  end={customEnd}
+                  onStartChange={(value) => { setCustomStart(value); setDraftPeriod("Personalizado"); }}
+                  onEndChange={(value) => { setCustomEnd(value); setDraftPeriod("Personalizado"); }}
+                />
+              </div>
+              {invalidCustomRange && (
+                <p role="status" className="mt-3 text-sm font-semibold text-rose-700">El mes inicial debe ser anterior o igual al mes final.</p>
+              )}
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Selección actual</p>
+              <p className="mt-1 text-sm font-semibold leading-6 text-brand-navy">{periodSummary}</p>
+            </div>
+          </div>
+          <aside className="rounded-2xl border border-slate-200 bg-[#f7f6fe] p-4">
+            <p className="text-sm font-semibold text-brand-navy">Periodos rápidos</p>
+            <div className="mt-4 space-y-2">
+              {quickPeriods.map((option) => {
+                const active = draftPeriod === option;
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setDraftPeriod(option)}
+                    className={`flex w-full items-center justify-between rounded-xl px-3.5 py-3 text-left text-sm font-semibold transition ${active ? "bg-[#8e44ff] text-white shadow-sm" : "bg-white text-slate-600 hover:bg-slate-100 hover:text-brand-navy"}`}
+                  >
+                    <span>{option}</span>
+                    {active && <span className="text-xs">Activo</span>}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => setDraftPeriod("Personalizado")}
+                className={`flex w-full items-center justify-between rounded-xl px-3.5 py-3 text-left text-sm font-semibold transition ${draftPeriod === "Personalizado" ? "bg-[#8e44ff] text-white shadow-sm" : "bg-white text-slate-600 hover:bg-slate-100 hover:text-brand-navy"}`}
+              >
+                <span>Rango personalizado</span>
+                {draftPeriod === "Personalizado" && <span className="text-xs">Activo</span>}
+              </button>
+            </div>
+          </aside>
+        </div>
+      </Modal>
+
     </DashboardShell>
   );
 }

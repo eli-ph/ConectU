@@ -231,7 +231,7 @@ export default function AdminOffersPage() {
           </div>
 
           <div className="hidden w-full overflow-x-auto md:block">
-            <table className="w-full min-w-[1080px] border-collapse text-left text-[12px]">
+            <table className="conectu-table w-full min-w-[1080px] border-collapse text-left text-[12px]">
               <thead className="bg-[#e9f0ff] text-[10px] font-bold uppercase tracking-[0.045em] text-slate-600">
                 <tr>
                   <th scope="col" className="px-3 py-3">Oferta</th>

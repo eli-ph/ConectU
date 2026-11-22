@@ -26,6 +26,9 @@ import {
   X,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { PasswordStrength } from "@/components/password-strength";
+import { SkillPicker } from "@/components/skill-picker";
+import { checkPassword } from "@/lib/password-policy";
 import { Panel, primaryButton, secondaryButton } from "@/components/dashboard-ui";
 
 function SectionHeader({ icon: Icon, title, description, badge }) {
@@ -111,62 +114,6 @@ function IconSelect({ icon: Icon, children, className = "", ...props }) {
   );
 }
 
-function evaluatePassword(password) {
-  const hasLength = password.length >= 8;
-  const hasUpper = /[A-Z]/.test(password);
-  const hasNumberOrSymbol = /[0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(
-    password
-  );
-
-  if (!password) {
-    return {
-      score: 0,
-      label: "Sin evaluar",
-      barColor: "bg-slate-200",
-      textColor: "text-slate-500",
-      hasLength: false,
-      hasUpper: false,
-      hasNumberOrSymbol: false,
-    };
-  }
-
-  const isStrong = hasLength && hasUpper && hasNumberOrSymbol;
-  if (isStrong) {
-    return {
-      score: 3,
-      label: "Segura",
-      barColor: "bg-emerald-500",
-      textColor: "text-emerald-600",
-      hasLength,
-      hasUpper,
-      hasNumberOrSymbol,
-    };
-  }
-
-  const passedCount = [hasLength, hasUpper, hasNumberOrSymbol].filter(Boolean).length;
-  if (passedCount === 2) {
-    return {
-      score: 2,
-      label: "Media",
-      barColor: "bg-amber-500",
-      textColor: "text-amber-600",
-      hasLength,
-      hasUpper,
-      hasNumberOrSymbol,
-    };
-  }
-
-  return {
-    score: 1,
-    label: "Débil",
-    barColor: "bg-rose-500",
-    textColor: "text-rose-600",
-    hasLength,
-    hasUpper,
-    hasNumberOrSymbol,
-  };
-}
-
 export default function StudentAccountPage() {
   const [fullName, setFullName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
@@ -184,31 +131,7 @@ export default function StudentAccountPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
-  const strength = useMemo(() => evaluatePassword(newPassword), [newPassword]);
-
-  const handleAddSkill = (e) => {
-    e.preventDefault();
-    const trimmed = skillInput.trim();
-    if (!trimmed) return;
-    if (!skills.some((item) => item.toLowerCase() === trimmed.toLowerCase())) {
-      setSkills((prev) => [...prev, trimmed]);
-    }
-    setSkillInput("");
-  };
-
-  const handleRemoveSkill = (skillToRemove) => {
-    setSkills((prev) => prev.filter((item) => item !== skillToRemove));
-  };
-
-  const widthPercent =
-    strength.score === 0
-      ? "0%"
-      : strength.score === 1
-      ? "33%"
-      : strength.score === 2
-      ? "66%"
-      : "100%";
+  const passwordReady = !newPassword || (checkPassword(newPassword).valid && confirmPassword === newPassword);
 
   return (
     <DashboardShell
@@ -433,57 +356,15 @@ export default function StudentAccountPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-4">
-                <div className="flex items-center justify-between gap-2 text-xs">
-                  <span className="font-semibold text-slate-700">
-                    Seguridad de la contraseña
-                  </span>
-                  <span className={`font-bold ${strength.textColor}`}>
-                    {strength.label}
-                  </span>
-                </div>
-
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200">
-                  <div
-                    className={`h-full rounded-full transition-all duration-300 ${strength.barColor}`}
-                    style={{ width: widthPercent }}
-                  />
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-slate-600">
-                  <span className="inline-flex items-center gap-1.5">
-                    {strength.hasLength ? (
-                      <CheckCircle2 size={14} className="text-emerald-600" />
-                    ) : (
-                      <Circle size={14} className="text-slate-400" />
-                    )}
-                    Mínimo 8 caracteres
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    {strength.hasUpper ? (
-                      <CheckCircle2 size={14} className="text-emerald-600" />
-                    ) : (
-                      <Circle size={14} className="text-slate-400" />
-                    )}
-                    Una mayúscula
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    {strength.hasNumberOrSymbol ? (
-                      <CheckCircle2 size={14} className="text-emerald-600" />
-                    ) : (
-                      <Circle size={14} className="text-slate-400" />
-                    )}
-                    Un número o símbolo
-                  </span>
-                </div>
-              </div>
+              <PasswordStrength password={newPassword} />
+              {confirmPassword && confirmPassword !== newPassword && <p className="text-xs font-semibold text-rose-700">Las contraseñas no coinciden.</p>}
             </div>
           </Panel>
 
           
 
           <div className="flex justify-end pt-1">
-            <button type="button" className={primaryButton}>
+            <button type="button" disabled={!passwordReady} className={primaryButton}>
               <Save size={16} />
               Guardar cambios
             </button>
@@ -516,52 +397,7 @@ export default function StudentAccountPage() {
               description="Etiquetas activas para emparejamiento con vacantes."
             />
             <div className="space-y-4 p-5">
-              <div className="flex items-center justify-between text-xs text-slate-500">
-                <span>Habilidades agregadas</span>
-                <span className="font-semibold text-brand-navy">
-                  {skills.length}{" "}
-                  {skills.length === 1 ? "seleccionada" : "seleccionadas"}
-                </span>
-              </div>
-
-              <div className="flex min-h-11 flex-wrap gap-2 rounded-xl border border-slate-100 bg-slate-50/70 p-3">
-                {skills.length === 0 ? (
-                  <p className="text-xs text-slate-400">
-                    Aún no has agregado habilidades técnicas.
-                  </p>
-                ) : (
-                  skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#eeefff] px-2.5 py-1 text-xs font-semibold text-brand-navy"
-                    >
-                      {skill}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveSkill(skill)}
-                        aria-label={`Quitar ${skill}`}
-                        className="rounded hover:bg-brand-navy/10"
-                      >
-                        <X size={13} />
-                      </button>
-                    </span>
-                  ))
-                )}
-              </div>
-
-              <form onSubmit={handleAddSkill} className="flex gap-2">
-                <input
-                  type="text"
-                  value={skillInput}
-                  onChange={(e) => setSkillInput(e.target.value)}
-                  placeholder="Añadir tecnología..."
-                  className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-navy/10"
-                />
-                <button type="submit" className={secondaryButton}>
-                  <Plus size={15} />
-                  Añadir
-                </button>
-              </form>
+              <SkillPicker skills={skills} onChange={setSkills} label="Buscar habilidades técnicas" />
             </div>
           </Panel>
         </aside>

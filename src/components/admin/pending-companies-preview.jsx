@@ -37,7 +37,7 @@ export function PendingCompaniesPreview({ companies }) {
       </div>
 
       <div className="hidden overflow-x-auto sm:block">
-        <table className="w-full min-w-[740px] border-collapse text-left text-sm">
+        <table className="conectu-table w-full min-w-[740px] border-collapse text-left text-sm">
           <thead className="bg-[#f3f5fb] text-[0.69rem] font-bold uppercase tracking-[0.065em] text-slate-500">
             <tr>
               <th scope="col" className="px-6 py-4">Organización / razón social</th>

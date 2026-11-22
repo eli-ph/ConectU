@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { Modal } from "@/components/dashboard-ui";
+import { TablePagination } from "@/components/table-pagination";
 
 const initialApplications = [
   {
@@ -361,6 +362,8 @@ export default function StudentApplicationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("Todos");
   const [sortOrder, setSortOrder] = useState("recientes");
+  const [page, setPage] = useState(1);
+  const pageSize = 5;
 
   const statusCounts = useMemo(() => {
     const counts = {
@@ -401,6 +404,10 @@ export default function StudentApplicationsPage() {
     return list;
   }, [applications, activeStatus, searchQuery, selectedType, sortOrder]);
 
+  const pages = Math.max(1, Math.ceil(filteredApplications.length / pageSize));
+  const safePage = Math.min(page, pages);
+  const paginatedApplications = filteredApplications.slice((safePage - 1) * pageSize, safePage * pageSize);
+
   return (
     <DashboardShell
       role="estudiante"
@@ -417,7 +424,7 @@ export default function StudentApplicationsPage() {
               <button
                 key={st}
                 type="button"
-                onClick={() => setActiveStatus(st)}
+                onClick={() => { setActiveStatus(st); setPage(1); }}
                 className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
                   isSelected
                     ? "bg-brand-navy text-white shadow-xs"
@@ -458,7 +465,7 @@ export default function StudentApplicationsPage() {
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
               placeholder="Buscar por puesto, folio o empresa..."
               className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-navy/10"
             />
@@ -471,7 +478,7 @@ export default function StudentApplicationsPage() {
             />
             <select
               value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
+              onChange={(e) => { setSelectedType(e.target.value); setPage(1); }}
               aria-label="Filtrar por tipo de oferta"
               className="select-chevron w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-8 pr-8 text-sm text-slate-700 focus:border-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-navy/10"
             >
@@ -485,7 +492,7 @@ export default function StudentApplicationsPage() {
 
           <select
             value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value)}
+            onChange={(e) => { setSortOrder(e.target.value); setPage(1); }}
             aria-label="Ordenar postulaciones"
             className="select-chevron rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 focus:border-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-navy/10"
           >
@@ -496,7 +503,7 @@ export default function StudentApplicationsPage() {
 
         {/* Vista de escritorio */}
         <div className="hidden overflow-x-auto md:block">
-          <table className="w-full border-collapse text-left text-sm">
+          <table className="conectu-table w-full border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/70 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                 <th className="px-4 py-3.5">Puesto / convocatoria</th>
@@ -518,7 +525,7 @@ export default function StudentApplicationsPage() {
                   </td>
                 </tr>
               ) : (
-                filteredApplications.map((item) => {
+                paginatedApplications.map((item) => {
                   const OfferIcon = item.icon || FileText;
                   return (
                     <tr
@@ -593,7 +600,7 @@ export default function StudentApplicationsPage() {
               No se encontraron postulaciones con los filtros seleccionados.
             </p>
           ) : (
-            filteredApplications.map((item) => {
+            paginatedApplications.map((item) => {
               const OfferIcon = item.icon || FileText;
               return (
                 <button
@@ -629,23 +636,7 @@ export default function StudentApplicationsPage() {
           )}
         </div>
 
-        {/* Pie de tabla */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/40 px-4 py-3 text-xs text-slate-500">
-          <p>
-            Mostrando{" "}
-            <span className="font-semibold text-slate-700">
-              {filteredApplications.length}
-            </span>{" "}
-            de{" "}
-            <span className="font-semibold text-slate-700">
-              {applications.length}
-            </span>{" "}
-            postulaciones registradas
-          </p>
-          <span className="rounded-md bg-brand-navy px-2.5 py-1 font-semibold text-white">
-            1
-          </span>
-        </div>
+        <TablePagination page={safePage} pages={pages} onChange={setPage} total={filteredApplications.length} pageSize={pageSize} label="postulaciones" />
       </section>
 
       {/* Modal estilo prototipo Stitch */}

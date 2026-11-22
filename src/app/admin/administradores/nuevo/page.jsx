@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   ArrowLeft,
-  Check,
   CheckCircle2,
   Circle,
   Eye,
@@ -12,8 +11,10 @@ import {
   UserRoundPlus,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { checkPassword } from "@/lib/password-policy";
+import { PasswordStrength } from "@/components/password-strength";
 
-const specialCharacterPattern = /[@$!%*#?&._\-+]/;
+
 
 export default function NewAdministratorPage() {
   const [password, setPassword] = useState("");
@@ -24,15 +25,8 @@ export default function NewAdministratorPage() {
   const [enableTwoFactor, setEnableTwoFactor] = useState(false);
   const [notice, setNotice] = useState("");
 
-  const passwordRequirements = [
-    { label: "Mínimo 10 caracteres", met: password.length >= 10 },
-    { label: "Al menos una letra mayúscula y una minúscula", met: /[A-Z]/.test(password) && /[a-z]/.test(password) },
-    { label: "Al menos un número (0–9)", met: /\d/.test(password) },
-    { label: "Al menos un carácter especial (@, $, !, %, *, #, ?, &)", met: specialCharacterPattern.test(password) },
-  ];
+  const passwordRequirements = checkPassword(password).checks.map(({ label, valid }) => ({ label, met: valid }));
   const score = passwordRequirements.filter((requirement) => requirement.met).length;
-  const strengthLabels = ["Sin ingresar", "Muy débil", "Básica", "Media", "Fuerte"];
-  const strengthColors = ["bg-slate-200", "bg-rose-400", "bg-amber-400", "bg-sky-500", "bg-emerald-500"];
   const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
 
   function handleSubmit(event) {
@@ -122,7 +116,7 @@ export default function NewAdministratorPage() {
                     name="password"
                     type={showPassword ? "text" : "password"}
                     required
-                    minLength={10}
+                    minLength={8}
                     autoComplete="new-password"
                     placeholder="Ingresa una contraseña"
                     value={password}
@@ -135,16 +129,7 @@ export default function NewAdministratorPage() {
                     label="contraseña provisional"
                   />
                 </div>
-                <div className="mt-3 flex items-center justify-between gap-3 text-xs text-slate-500">
-                  <span>Nivel de fortaleza:</span>
-                  <span className="font-semibold">{strengthLabels[password.length ? score || 1 : 0]}</span>
-                </div>
-                <div className="mt-1.5 grid grid-cols-4 gap-1.5" role="meter" aria-label="Fortaleza de la contraseña" aria-valuemin={0} aria-valuemax={4} aria-valuenow={password.length ? score : 0}>
-                  {[1, 2, 3, 4].map((level) => (
-                    <div key={level} className={`h-1.5 rounded-full ${password.length && score >= level ? strengthColors[Math.max(score, 1)] : "bg-slate-200"}`} />
-                  ))}
-                </div>
-              </Field>
+                </Field>
               <Field id="admin-confirm-password" label="Confirmar contraseña">
                 <div className="relative">
                   <input
@@ -152,7 +137,7 @@ export default function NewAdministratorPage() {
                     name="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
                     required
-                    minLength={10}
+                    minLength={8}
                     autoComplete="new-password"
                     placeholder="Repite la contraseña"
                     value={confirmPassword}
@@ -173,16 +158,8 @@ export default function NewAdministratorPage() {
                   </p>
                 )}
               </Field>
-              <div className="rounded-lg bg-[#f0f4fc] px-4 py-4 sm:col-span-2 sm:px-5">
-                <p className="mb-3 text-xs font-bold uppercase tracking-[0.07em] text-brand-navy">Requisitos de seguridad de acceso</p>
-                <ul className="grid gap-x-6 gap-y-2.5 text-xs text-slate-600 sm:grid-cols-2">
-                  {passwordRequirements.map((requirement) => (
-                    <li key={requirement.label} className={`flex items-start gap-2 ${requirement.met ? "text-emerald-700" : "text-slate-500"}`}>
-                      {requirement.met ? <CheckCircle2 size={16} className="mt-0.5 shrink-0" aria-hidden="true" /> : <Circle size={16} className="mt-0.5 shrink-0" aria-hidden="true" />}
-                      <span>{requirement.label}</span>
-                    </li>
-                  ))}
-                </ul>
+              <div className="sm:col-span-2">
+                <PasswordStrength password={password} />
               </div>
             </div>
           </section>
