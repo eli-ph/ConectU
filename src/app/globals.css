@@ -42,6 +42,8 @@
 html {
   scroll-behavior: smooth;
   text-size-adjust: 100%;
+  /* Reserva el ancho de la barra vertical, incluso cuando la página no hace scroll. */
+  scrollbar-gutter: stable;
 }
 
 body {
