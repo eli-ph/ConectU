@@ -26,7 +26,6 @@ import { Brand } from "@/components/brand";
 const navigation = {
   estudiante: [
     ["/estudiante", "Resumen", LayoutDashboard],
-    ["/ofertas", "Explorar ofertas", BriefcaseBusiness],
     ["/estudiante/postulaciones", "Mis postulaciones", ClipboardList],
     ["/estudiante/cuenta", "Mi cuenta", FileText],
   ],
@@ -54,7 +53,7 @@ const roleMeta = {
   admin: { label: "Panel administrativo", name: "Administración", initials: "AD" },
 };
 
-export function DashboardShell({ role, title, eyebrow, description, children }) {
+export function DashboardShell({ role, title, eyebrow, children }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -77,22 +76,15 @@ export function DashboardShell({ role, title, eyebrow, description, children }) 
     if (!menuOpen) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previous;
-    };
+    return () => { document.body.style.overflow = previous; };
   }, [menuOpen]);
 
-  const isActive = (href) =>
-    href === `/${role}` ? pathname === href : pathname.startsWith(href);
+  const isActive = (href) => href === `/${role}` ? pathname === href : pathname.startsWith(href);
 
   const sidebar = (
     <aside className="flex h-full w-[min(17rem,85vw)] flex-col overflow-y-auto border-r border-slate-200 bg-white lg:w-68">
-      <div className="flex min-h-[76px] items-center border-b border-slate-100 px-5">
-        <Brand />
-      </div>
-      <p className="px-5 pb-3 pt-7 text-[0.68rem] font-bold uppercase tracking-[0.13em] text-slate-400">
-        {meta.label}
-      </p>
+      <div className="flex min-h-[76px] items-center border-b border-slate-100 px-5"><Brand /></div>
+      <p className="px-5 pb-3 pt-7 text-[0.68rem] font-bold uppercase tracking-[0.13em] text-slate-400">{meta.label}</p>
       <nav className="flex-1 space-y-1 px-3" aria-label={meta.label}>
         {navigation[role].map(([href, label, Icon]) => (
           <Link
@@ -108,9 +100,7 @@ export function DashboardShell({ role, title, eyebrow, description, children }) 
           >
             <Icon size={18} className="shrink-0" aria-hidden="true" />
             <span className="min-w-0 flex-1">{label}</span>
-            {isActive(href) && (
-              <span className="h-1.5 w-1.5 rounded-full bg-brand-gold" aria-hidden="true" />
-            )}
+            {isActive(href) && <span className="h-1.5 w-1.5 rounded-full bg-brand-gold" aria-hidden="true" />}
           </Link>
         ))}
       </nav>
@@ -118,9 +108,7 @@ export function DashboardShell({ role, title, eyebrow, description, children }) 
       {role === "estudiante" && (
         <div className="mx-4 mb-4 rounded-2xl border border-brand-gold/20 bg-brand-gold-soft p-4">
           <p className="text-xs font-bold text-brand-navy">Acceso estudiantil gratuito</p>
-          <p className="mt-2 text-xs leading-5 text-slate-600">
-            Consulta ofertas y postúlate sin costo.
-          </p>
+          <p className="mt-2 text-xs leading-5 text-slate-600">Consulta ofertas y postúlate sin costo.</p>
         </div>
       )}
       <div className="border-t border-slate-100 p-3">
@@ -144,10 +132,7 @@ export function DashboardShell({ role, title, eyebrow, description, children }) 
 
   return (
     <div className="min-h-screen bg-page">
-      <a
-        href="#contenido-principal"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[90] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-brand-navy"
-      >
+      <a href="#contenido-principal" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[90] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-brand-navy">
         Saltar al contenido
       </a>
 
@@ -188,16 +173,23 @@ export function DashboardShell({ role, title, eyebrow, description, children }) 
               <Menu size={21} />
             </button>
             <div className="min-w-0">
-              <p className="hidden text-xs font-medium text-slate-500 sm:block">
-                {meta.label}
-              </p>
-              <p className="truncate text-sm font-bold text-brand-navy sm:text-base">
-                {title}
-              </p>
+              <p className="hidden text-xs font-medium text-slate-500 sm:block">{meta.label}</p>
+              <p className="truncate text-sm font-bold text-brand-navy sm:text-base">{title}</p>
             </div>
           </div>
 
           <div className="relative flex shrink-0 items-center gap-1.5 sm:gap-3">
+            {role === "estudiante" && (
+              <Link
+                href="/ofertas"
+                aria-label="Explorar ofertas"
+                title="Explorar ofertas"
+                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-brand-navy bg-brand-navy px-3 text-sm font-semibold text-white transition hover:bg-brand-navy-light sm:px-4"
+              >
+                <BriefcaseBusiness size={18} className="shrink-0" aria-hidden="true" />
+                <span className="hidden sm:inline">Explorar ofertas</span>
+              </Link>
+            )}
             <button
               type="button"
               className="grid h-11 w-11 place-items-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-brand-navy"
@@ -213,103 +205,55 @@ export function DashboardShell({ role, title, eyebrow, description, children }) 
               className="flex items-center gap-2 rounded-xl p-1.5 transition hover:bg-slate-100"
               aria-label="Abrir mi cuenta"
             >
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-navy text-xs font-bold text-white ring-2 ring-brand-gold/20">
-                {meta.initials}
-              </span>
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-navy text-xs font-bold text-white ring-2 ring-brand-gold/20">{meta.initials}</span>
               <span className="hidden max-w-36 min-w-0 text-left md:block">
-                <span className="block truncate text-xs font-bold text-slate-800">
-                  {meta.name}
-                </span>
-                <span className="block text-[0.7rem] text-slate-500">
-                  {role === "admin"
-                    ? "Administrador"
-                    : role === "empresa"
-                    ? "Empresa"
-                    : "Estudiante"}
-                </span>
+                <span className="block truncate text-xs font-bold text-slate-800">{meta.name}</span>
+                <span className="block text-[0.7rem] text-slate-500">{role === "admin" ? "Administrador" : role === "empresa" ? "Empresa" : "Estudiante"}</span>
               </span>
             </Link>
 
             {notificationsOpen && (
-              <div
-                id="popover-notificaciones"
-                className="absolute right-0 top-[58px] z-50 w-[min(370px,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-raised"
-              >
+              <div id="popover-notificaciones" className="absolute right-0 top-[58px] z-50 w-[min(370px,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-raised">
                 <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-4">
                   <div>
                     <p className="text-sm font-bold text-brand-navy">Notificaciones</p>
-                    <p className="mt-0.5 text-xs text-slate-500">
-                      Avisos de la plataforma
-                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500">Avisos de la plataforma</p>
                   </div>
-                  <button
-                    type="button"
-                    className="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100"
-                    aria-label="Cerrar notificaciones"
-                    onClick={() => setNotificationsOpen(false)}
-                  >
+                  <button type="button" className="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Cerrar notificaciones" onClick={() => setNotificationsOpen(false)}>
                     <X size={18} />
                   </button>
                 </div>
                 <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-2.5">
-                  <div
-                    className="flex gap-1 rounded-lg bg-slate-100 p-1"
-                    role="group"
-                    aria-label="Filtrar notificaciones"
-                  >
+                  <div className="flex gap-1 rounded-lg bg-slate-100 p-1" role="group" aria-label="Filtrar notificaciones">
                     {["todas", "no-leidas"].map((filter) => (
                       <button
                         type="button"
                         key={filter}
                         aria-pressed={notificationFilter === filter}
                         onClick={() => setNotificationFilter(filter)}
-                        className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
-                          notificationFilter === filter
-                            ? "bg-white text-brand-navy shadow-sm"
-                            : "text-slate-500 hover:text-brand-navy"
-                        }`}
+                        className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${notificationFilter === filter ? "bg-white text-brand-navy shadow-sm" : "text-slate-500 hover:text-brand-navy"}`}
                       >
                         {filter === "todas" ? "Todas" : "No leídas"}
                       </button>
                     ))}
                   </div>
-                  <button
-                    type="button"
-                    disabled
-                    className="text-xs font-semibold text-slate-400"
-                    title="No hay notificaciones que marcar como leídas"
-                  >
-                    Marcar leídas
-                  </button>
+                  <button type="button" disabled className="text-xs font-semibold text-slate-400" title="No hay notificaciones que marcar como leídas">Marcar leídas</button>
                 </div>
                 <div className="px-5 py-8 text-center">
                   <Bell className="mx-auto text-slate-300" size={27} />
-                  <p className="mt-3 text-sm font-semibold text-slate-700">
-                    Sin notificaciones
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">
-                    Los avisos aparecerán aquí cuando se habilite la información real de
-                    la plataforma.
-                  </p>
+                  <p className="mt-3 text-sm font-semibold text-slate-700">Sin notificaciones</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">Los avisos aparecerán aquí cuando se habilite la información real de la plataforma.</p>
                 </div>
               </div>
             )}
           </div>
         </header>
 
-        <main
-          id="contenido-principal"
-          className="min-w-0 px-4 py-6 sm:px-6 sm:py-8 xl:px-9 xl:py-9"
-        >
+        <main id="contenido-principal" className="min-w-0 px-4 py-6 sm:px-6 sm:py-8 xl:px-9 xl:py-9">
           <div className="mx-auto w-full min-w-0 max-w-[1440px]">
             <div className="mb-6 sm:mb-8">
               {eyebrow && <p className="ui-eyebrow mb-2">{eyebrow}</p>}
               <h1 className="ui-heading text-2xl sm:text-3xl">{title}</h1>
-              {description && (
-                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-500">
-                  {description}
-                </p>
-              )}
             </div>
             {children}
           </div>
