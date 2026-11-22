@@ -2,14 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BarChart3,
   Bell,
-  BookOpenText,
   BriefcaseBusiness,
   Building2,
-  ChevronDown,
   CircleUserRound,
   ClipboardList,
   CreditCard,
@@ -20,7 +18,6 @@ import {
   Settings,
   ShieldCheck,
   Tags,
-  UserRound,
   UsersRound,
   X,
 } from "lucide-react";
@@ -61,35 +58,73 @@ export function DashboardShell({ role, title, eyebrow, children }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notificationFilter, setNotificationFilter] = useState("todas");
   const meta = roleMeta[role];
 
+  useEffect(() => {
+    if (!menuOpen && !notificationsOpen) return;
+    const onEscape = (event) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        setNotificationsOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, [menuOpen, notificationsOpen]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
+  }, [menuOpen]);
+
+  const isActive = (href) => href === `/${role}` ? pathname === href : pathname.startsWith(href);
+
   const sidebar = (
-    <aside className="flex h-full w-72 flex-col border-r border-slate-200 bg-white">
-      <div className="flex h-[68px] items-center px-6"><Brand /></div>
-      <div className="px-5 pb-2 pt-6 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">{meta.label}</div>
+    <aside className="flex h-full w-[min(17rem,85vw)] flex-col overflow-y-auto border-r border-slate-200 bg-white lg:w-68">
+      <div className="flex min-h-[76px] items-center border-b border-slate-100 px-5"><Brand /></div>
+      <p className="px-5 pb-3 pt-7 text-[0.68rem] font-bold uppercase tracking-[0.13em] text-slate-400">{meta.label}</p>
       <nav className="flex-1 space-y-1 px-3" aria-label={meta.label}>
-        {navigation[role].map(([href, label, Icon]) => {
-          const active = href === `/${role}` ? pathname === href : pathname.startsWith(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              onClick={() => setMenuOpen(false)}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                active ? "bg-brand-navy text-white" : "text-slate-600 hover:bg-slate-100 hover:text-brand-navy"
-              }`}
-            >
-              <Icon size={18} /> {label}
-            </Link>
-          );
-        })}
+        {navigation[role].map(([href, label, Icon]) => (
+          <Link
+            key={href}
+            href={href}
+            aria-current={isActive(href) ? "page" : undefined}
+            onClick={() => setMenuOpen(false)}
+            className={`flex min-h-11 items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-semibold transition-colors ${
+              isActive(href)
+                ? "bg-brand-navy text-white shadow-soft"
+                : "text-slate-600 hover:bg-slate-100 hover:text-brand-navy"
+            }`}
+          >
+            <Icon size={18} className="shrink-0" aria-hidden="true" />
+            <span className="min-w-0 flex-1">{label}</span>
+            {isActive(href) && <span className="h-1.5 w-1.5 rounded-full bg-brand-gold" aria-hidden="true" />}
+          </Link>
+        ))}
       </nav>
-      {role === "estudiante" && <div className="mx-4 mb-4 rounded-xl bg-[#eeefff] p-4"><div className="flex items-center justify-between gap-2"><span className="text-xs font-bold text-brand-navy">Plan estudiante</span><span className="rounded-full bg-white px-2 py-0.5 text-[0.68rem] font-semibold text-brand-navy">Activo</span></div><p className="mt-2 text-xs leading-5 text-slate-600">Acceso gratuito a las funciones estudiantiles.</p></div>}
+
+      {role === "estudiante" && (
+        <div className="mx-4 mb-4 rounded-2xl border border-brand-gold/20 bg-brand-gold-soft p-4">
+          <p className="text-xs font-bold text-brand-navy">Acceso estudiantil gratuito</p>
+          <p className="mt-2 text-xs leading-5 text-slate-600">Consulta ofertas y postúlate sin costo.</p>
+        </div>
+      )}
       <div className="border-t border-slate-100 p-3">
-        <Link href={`/${role}/cuenta`} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100">
+        <Link
+          href={`/${role}/cuenta`}
+          onClick={() => setMenuOpen(false)}
+          className="flex min-h-11 items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-brand-navy"
+        >
           <Settings size={18} /> Mi cuenta y seguridad
         </Link>
-        <Link href="/ingresar" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100">
+        <Link
+          href="/ingresar"
+          onClick={() => setMenuOpen(false)}
+          className="flex min-h-11 items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-brand-navy"
+        >
           <LogOut size={18} /> Cerrar sesión
         </Link>
       </div>
@@ -98,77 +133,122 @@ export function DashboardShell({ role, title, eyebrow, children }) {
 
   return (
     <div className="min-h-screen bg-page">
+      <a href="#contenido-principal" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[90] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-brand-navy">
+        Saltar al contenido
+      </a>
+
       <div className="fixed inset-y-0 left-0 z-40 hidden lg:block">{sidebar}</div>
+
       {menuOpen && (
-        <div className="fixed inset-0 z-[60] lg:hidden">
-          <button className="absolute inset-0 bg-slate-950/40" aria-label="Cerrar navegación" onClick={() => setMenuOpen(false)} />
-          <div className="relative h-full w-72 shadow-2xl">{sidebar}</div>
+        <div className="fixed inset-0 z-[70] lg:hidden">
+          <button
+            type="button"
+            className="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]"
+            aria-label="Cerrar navegación"
+            onClick={() => setMenuOpen(false)}
+          />
+          <div className="relative h-full w-fit shadow-raised">
+            {sidebar}
+            <button
+              type="button"
+              className="absolute right-2 top-4 grid h-10 w-10 place-items-center rounded-lg bg-white text-brand-navy shadow-sm"
+              onClick={() => setMenuOpen(false)}
+              aria-label="Cerrar menú lateral"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
       )}
 
-      <div className="lg:pl-72">
-        <header className="sticky top-0 z-30 flex h-[68px] items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-xl sm:px-7">
-          <div className="flex items-center gap-3">
-            <button className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 text-brand-navy lg:hidden" onClick={() => setMenuOpen(true)} aria-label="Abrir navegación">
-              <Menu size={20} />
+      <div className="min-w-0 lg:pl-68">
+        <header className="sticky top-0 z-30 flex min-h-[76px] items-center justify-between gap-3 border-b border-slate-200/90 bg-white/95 px-4 py-2 shadow-[0_1px_8px_rgba(20,43,73,0.03)] backdrop-blur-xl sm:px-6 xl:px-9">
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              type="button"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-slate-200 text-brand-navy lg:hidden"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Abrir navegación"
+              aria-expanded={menuOpen}
+            >
+              <Menu size={21} />
             </button>
-            <div className="hidden sm:block">
-              <p className="text-xs font-medium text-slate-500">{meta.label}</p>
-              <p className="text-sm font-semibold text-brand-navy">{title}</p>
+            <div className="min-w-0">
+              <p className="hidden text-xs font-medium text-slate-500 sm:block">{meta.label}</p>
+              <p className="truncate text-sm font-bold text-brand-navy sm:text-base">{title}</p>
             </div>
           </div>
-          <div className="relative flex items-center gap-2 sm:gap-4">
+
+          <div className="relative flex shrink-0 items-center gap-1.5 sm:gap-3">
             <button
-              className="relative grid h-10 w-10 place-items-center rounded-full text-slate-600 hover:bg-slate-100"
+              type="button"
+              className="grid h-11 w-11 place-items-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-brand-navy"
               onClick={() => setNotificationsOpen((value) => !value)}
               aria-expanded={notificationsOpen}
               aria-label="Ver notificaciones"
+              aria-controls="popover-notificaciones"
             >
               <Bell size={20} />
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-brand-gold ring-2 ring-white" />
             </button>
-            <button className="flex items-center gap-2 rounded-full p-1 pr-2 hover:bg-slate-100">
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-navy text-xs font-bold text-white">{meta.initials}</span>
-              <span className="hidden text-left md:block">
-                <span className="block text-xs font-semibold text-slate-800">{meta.name}</span>
+            <Link
+              href={`/${role}/cuenta`}
+              className="flex items-center gap-2 rounded-xl p-1.5 transition hover:bg-slate-100"
+              aria-label="Abrir mi cuenta"
+            >
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-navy text-xs font-bold text-white ring-2 ring-brand-gold/20">{meta.initials}</span>
+              <span className="hidden max-w-36 min-w-0 text-left md:block">
+                <span className="block truncate text-xs font-bold text-slate-800">{meta.name}</span>
                 <span className="block text-[0.7rem] text-slate-500">{role === "admin" ? "Administrador" : role === "empresa" ? "Empresa" : "Estudiante"}</span>
               </span>
-              <ChevronDown size={15} className="hidden text-slate-400 md:block" />
-            </button>
+            </Link>
+
             {notificationsOpen && (
-              <div className="absolute right-0 top-[54px] w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
-                <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-                  <div><p className="text-sm font-semibold text-slate-900">Notificaciones</p><p className="text-xs text-slate-500">Actividad reciente</p></div>
-                  <button className="text-xs font-semibold text-brand-navy">Marcar leídas</button>
+              <div id="popover-notificaciones" className="absolute right-0 top-[58px] z-50 w-[min(370px,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-raised">
+                <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-4">
+                  <div>
+                    <p className="text-sm font-bold text-brand-navy">Notificaciones</p>
+                    <p className="mt-0.5 text-xs text-slate-500">Avisos de la plataforma</p>
+                  </div>
+                  <button type="button" className="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Cerrar notificaciones" onClick={() => setNotificationsOpen(false)}>
+                    <X size={18} />
+                  </button>
                 </div>
-                <div className="p-2">
-                  <Notification icon={BookOpenText} title="Tienes una actualización pendiente" text="Consulta los detalles desde tu panel." />
-                  <Notification icon={UserRound} title="Tu cuenta está lista" text="Completa la información de tu perfil." />
+                <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-2.5">
+                  <div className="flex gap-1 rounded-lg bg-slate-100 p-1" role="group" aria-label="Filtrar notificaciones">
+                    {["todas", "no-leidas"].map((filter) => (
+                      <button
+                        type="button"
+                        key={filter}
+                        aria-pressed={notificationFilter === filter}
+                        onClick={() => setNotificationFilter(filter)}
+                        className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${notificationFilter === filter ? "bg-white text-brand-navy shadow-sm" : "text-slate-500 hover:text-brand-navy"}`}
+                      >
+                        {filter === "todas" ? "Todas" : "No leídas"}
+                      </button>
+                    ))}
+                  </div>
+                  <button type="button" disabled className="text-xs font-semibold text-slate-400" title="No hay notificaciones que marcar como leídas">Marcar leídas</button>
+                </div>
+                <div className="px-5 py-8 text-center">
+                  <Bell className="mx-auto text-slate-300" size={27} />
+                  <p className="mt-3 text-sm font-semibold text-slate-700">Sin notificaciones</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">Los avisos aparecerán aquí cuando se habilite la información real de la plataforma.</p>
                 </div>
               </div>
             )}
           </div>
         </header>
 
-        <main className="px-4 py-7 sm:px-7 lg:px-8 lg:py-7">
-          <div className="mx-auto max-w-[1240px] 2xl:max-w-[1480px]">
-            <div className="mb-7">
-              {eyebrow && <p className="mb-1 text-sm font-semibold text-brand-gold">{eyebrow}</p>}
-              <h1 className="text-2xl font-bold tracking-[-0.03em] text-brand-navy sm:text-[2rem]">{title}</h1>
+        <main id="contenido-principal" className="min-w-0 px-4 py-6 sm:px-6 sm:py-8 xl:px-9 xl:py-9">
+          <div className="mx-auto w-full min-w-0 max-w-[1440px]">
+            <div className="mb-6 sm:mb-8">
+              {eyebrow && <p className="ui-eyebrow mb-2">{eyebrow}</p>}
+              <h1 className="ui-heading text-2xl sm:text-3xl">{title}</h1>
             </div>
             {children}
           </div>
         </main>
       </div>
     </div>
-  );
-}
-
-function Notification({ icon: Icon, title, text }) {
-  return (
-    <button className="flex w-full gap-3 rounded-lg p-3 text-left hover:bg-slate-50">
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-gold-soft text-[#7b5d16]"><Icon size={17} /></span>
-      <span><span className="block text-sm font-semibold text-slate-800">{title}</span><span className="block text-xs leading-5 text-slate-500">{text}</span></span>
-    </button>
   );
 }
