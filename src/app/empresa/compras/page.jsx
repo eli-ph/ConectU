@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { TablePagination } from "@/components/table-pagination";
 
 const transactions = [
   {
@@ -80,6 +81,7 @@ const transactions = [
 export default function CompanyPurchasesPage() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
 
   const filteredRows = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -95,6 +97,10 @@ export default function CompanyPurchasesPage() {
         item.status.toLowerCase().includes(q)
     );
   }, [query]);
+
+  const pages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+  const safePage = Math.min(page, pages);
+  const visibleRows = filteredRows.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   return (
     <DashboardShell
@@ -135,7 +141,7 @@ export default function CompanyPurchasesPage() {
             <input
               type="text"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => { setQuery(e.target.value); setPage(1); }}
               placeholder="Filtrar por folio o concepto..."
               className="w-full bg-transparent text-xs font-normal text-slate-700 placeholder:text-slate-400 outline-none"
             />
@@ -154,7 +160,7 @@ export default function CompanyPurchasesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
-              {filteredRows.map((row) => (
+              {visibleRows.map((row) => (
                 <tr key={row.id} className="transition hover:bg-slate-50/50">
                   {/* Fecha y hora */}
                   <td className="whitespace-nowrap px-5 py-4 align-top">
@@ -253,39 +259,13 @@ export default function CompanyPurchasesPage() {
           </table>
         </div>
 
-        {/* Pie de tabla */}
-        <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-100 px-5 py-3.5 text-xs font-normal text-slate-400 sm:flex-row">
-          <p>
-            Mostrando {filteredRows.length} de {transactions.length} transacciones
-            registradas
-          </p>
-
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              aria-label="Página anterior"
-              className="grid h-7 w-7 place-items-center rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50"
-            >
-              <ChevronLeft size={14} />
-            </button>
-            <button
-              type="button"
-              onClick={() => setPage(1)}
-              className="h-7 w-7 rounded-lg bg-brand-navy text-xs font-semibold text-white"
-            >
-              {page}
-            </button>
-            <button
-              type="button"
-              onClick={() => setPage(1)}
-              aria-label="Página siguiente"
-              className="grid h-7 w-7 place-items-center rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50"
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
-        </div>
+        {/* La misma navegación que los demás listados, con paginación real. */}
+        <TablePagination
+          page={safePage} pages={pages} onChange={setPage}
+          total={filteredRows.length} pageSize={pageSize}
+          onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+          label="transacciones de ejemplo"
+        />
       </section>
     </DashboardShell>
   );

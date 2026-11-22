@@ -1,19 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  GraduationCap,
-  LockKeyhole,
-  RotateCcw,
-  Search,
-  ShieldCheck,
-  SlidersHorizontal,
-  UsersRound,
-} from "lucide-react";
+import { Eye, GraduationCap, LockKeyhole, RotateCcw, Search, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { TablePagination } from "@/components/table-pagination";
 import { UserDetailsModal, UserManagementModal } from "@/components/admin/user-management-modal";
 
 // Registros de ejemplo presentes en el proyecto inicial. No proceden de SQLite.
@@ -134,8 +124,6 @@ export default function AdminUsersPage() {
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
   const safePage = Math.min(page, totalPages);
   const visibleUsers = filteredUsers.slice((safePage - 1) * pageSize, safePage * pageSize);
-  const start = filteredUsers.length ? (safePage - 1) * pageSize + 1 : 0;
-  const end = Math.min(safePage * pageSize, filteredUsers.length);
 
   const resetPage = () => setPage(1);
   const resetFilters = () => { setRole("todos"); setQuery(""); setStatus(""); setSortOrder("original"); setPage(1); };
@@ -226,21 +214,12 @@ export default function AdminUsersPage() {
           {visibleUsers.map((user) => <MobileUser key={user.id} user={user} onView={setDetailsUser} onManage={setManagedUser} />)}
         </div>
         {visibleUsers.length === 0 && <div className="px-5 py-12 text-center text-sm text-slate-500">No hay usuarios que coincidan con los filtros.</div>}
-        <footer className="flex flex-col items-start justify-between gap-3 border-t border-slate-200 bg-[#f6f7fd] px-4 py-3 text-xs text-slate-600 sm:flex-row sm:items-center">
-          <div className="flex flex-wrap items-center gap-3">
-            <span>Mostrando {start}–{end} de {filteredUsers.length} registros de ejemplo</span>
-            <label className="flex items-center gap-2">Por página
-              <select value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1); }} className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-brand-navy">
-                <option value={5}>5</option><option value={10}>10</option>
-              </select>
-            </label>
-          </div>
-          <div className="flex items-center gap-2">
-            <button type="button" disabled={safePage <= 1} aria-label="Página anterior" onClick={() => setPage(safePage - 1)} className="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 bg-white text-brand-navy disabled:opacity-40"><ChevronLeft size={16} /></button>
-            <span className="min-w-12 text-center font-semibold text-brand-navy">{safePage} / {totalPages}</span>
-            <button type="button" disabled={safePage >= totalPages} aria-label="Página siguiente" onClick={() => setPage(safePage + 1)} className="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 bg-white text-brand-navy disabled:opacity-40"><ChevronRight size={16} /></button>
-          </div>
-        </footer>
+        <TablePagination
+          page={safePage} pages={totalPages} onChange={setPage}
+          total={filteredUsers.length} pageSize={pageSize}
+          onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+          label="usuarios de ejemplo"
+        />
       </section>
 
       <UserDetailsModal user={detailsUser} onClose={() => setDetailsUser(null)} onManage={(user) => { setDetailsUser(null); setManagedUser(user); }} />

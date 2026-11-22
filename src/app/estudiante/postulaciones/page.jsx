@@ -1,30 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  Banknote,
-  Briefcase,
-  Building2,
-  Check,
-  Code2,
-  Compass,
-  Cpu,
-  Eye,
-  FileText,
-  Filter,
-  MapPin,
-  Radio,
-  Search,
-  ShieldCheck,
-  TrendingUp,
-  Truck,
-  Users,
-  Wrench,
-  X,
-} from "lucide-react";
+import { Banknote, Briefcase, Building2, Check, Code2, Compass, Cpu, Eye, FileText, Filter, MapPin, Radio, Search, ShieldCheck, TrendingUp, Truck, Users, Wrench } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { Modal } from "@/components/dashboard-ui";
 import { TablePagination } from "@/components/table-pagination";
+import { OFFER_TYPE_OPTIONS } from "@/lib/offer-types";
 
 const initialApplications = [
   {
@@ -91,7 +72,7 @@ const initialApplications = [
     badgeNote: "Analítica y Datos",
     company: "Organización demostrativa",
     companySub: "Centro Operativo",
-    type: "Prácticas",
+    type: "Prácticas profesionales",
     mode: "Remota",
     locationDetail: "Modalidad remota · México",
     vacancies: "2 plazas abiertas",
@@ -148,7 +129,7 @@ const initialApplications = [
     badgeNote: "Interfaces Web",
     company: "Estudio digital demostrativo",
     companySub: "Remoto / Híbrido",
-    type: "Becariado",
+    type: "Internships",
     mode: "Presencial",
     locationDetail: "Ciudad de México · Zona Sur",
     vacancies: "2 plazas abiertas",
@@ -158,7 +139,7 @@ const initialApplications = [
       "Estudio digital dedicado al diseño y desarrollo de productos web modernos. Ideal para perfiles en formación que buscan construir interfaces limpias y accesibles.",
     techStack: "HTML, CSS / Tailwind CSS, React, JavaScript, Figma.",
     universityValidation:
-      "Programa de becariado con seguimiento de vinculación.",
+      "Programa formativo con seguimiento de vinculación.",
     date: "2 oct 2026",
     time: "17:05 hrs CST",
     priority: "Estándar",
@@ -262,7 +243,7 @@ const initialApplications = [
     badgeNote: "Retirada por el alumno",
     company: "Laboratorio demostrativo",
     companySub: "CDMX",
-    type: "Becariado",
+    type: "Internships",
     mode: "Remota",
     locationDetail: "Remoto · CDMX",
     vacancies: "1 plaza abierta",
@@ -363,7 +344,7 @@ export default function StudentApplicationsPage() {
   const [selectedType, setSelectedType] = useState("Todos");
   const [sortOrder, setSortOrder] = useState("recientes");
   const [page, setPage] = useState(1);
-  const pageSize = 5;
+  const [pageSize, setPageSize] = useState(5);
 
   const statusCounts = useMemo(() => {
     const counts = {
@@ -483,10 +464,7 @@ export default function StudentApplicationsPage() {
               className="select-chevron w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-8 pr-8 text-sm text-slate-700 focus:border-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-navy/10"
             >
               <option value="Todos">Tipo: Todos</option>
-              <option value="Empleo">Empleo</option>
-              <option value="Prácticas">Prácticas</option>
-              <option value="Becariado">Becariado</option>
-              <option value="Servicio social">Servicio social</option>
+              {OFFER_TYPE_OPTIONS.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
             </select>
           </div>
 
@@ -636,7 +614,7 @@ export default function StudentApplicationsPage() {
           )}
         </div>
 
-        <TablePagination page={safePage} pages={pages} onChange={setPage} total={filteredApplications.length} pageSize={pageSize} label="postulaciones" />
+        <TablePagination page={safePage} pages={pages} onChange={setPage} total={filteredApplications.length} pageSize={pageSize} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} label="postulaciones" />
       </section>
 
       {/* Modal estilo prototipo Stitch */}

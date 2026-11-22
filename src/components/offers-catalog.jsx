@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { OFFER_TYPE_OPTIONS } from "@/lib/offer-types";
 import { useSearchParams } from "next/navigation";
 import {
   ArrowRight,
@@ -28,7 +29,7 @@ const demoOffers = [
     id: 1,
     title: "Desarrollo frontend · nivel inicial",
     company: "Empresa tecnológica",
-    type: "Becariado",
+    type: "Internships",
     mode: "Híbrida",
     location: "Ciudad de México",
     axis: "Ciencia y tecnología",
@@ -40,7 +41,7 @@ const demoOffers = [
     id: 2,
     title: "Análisis de datos para operaciones",
     company: "Organización de servicios",
-    type: "Prácticas",
+    type: "Prácticas profesionales",
     mode: "Remota",
     location: "México",
     axis: "Ciencia y tecnología",
@@ -76,7 +77,7 @@ const demoOffers = [
     id: 5,
     title: "Diseño mecánico y prototipado 3D",
     company: "Estudio de ingeniería",
-    type: "Prácticas",
+    type: "Prácticas profesionales",
     mode: "Presencial",
     location: "Ciudad de México",
     axis: "Industria y energía",
@@ -88,7 +89,7 @@ const demoOffers = [
     id: 6,
     title: "Desarrollo IoT para monitoreo",
     company: "Organización de tecnología",
-    type: "Becariado",
+    type: "Internships",
     mode: "Remota",
     location: "México",
     axis: "Ciencia y tecnología",
@@ -98,12 +99,7 @@ const demoOffers = [
   },
 ];
 
-const typeOptions = [
-  { value: "Empleo", label: "Empleo inicial" },
-  { value: "Prácticas", label: "Prácticas profesionales" },
-  { value: "Becariado", label: "Becariado" },
-  { value: "Servicio social", label: "Servicio social" },
-];
+const typeOptions = OFFER_TYPE_OPTIONS;
 
 const axisOptions = [
   "Ciencia y tecnología",
@@ -209,7 +205,7 @@ export function OffersCatalog() {
           <div className="mt-6 max-w-[830px]">
             <p className="mb-2 text-xs font-bold uppercase tracking-[.14em] text-[#ecc474]">Explora tu siguiente oportunidad</p>
             <h1 className="text-[clamp(2rem,4.2vw,3.05rem)] font-extrabold leading-[1.12] tracking-[-.04em]">Catálogo de oportunidades profesionales</h1>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-200 sm:text-base">Descubre opciones de empleo inicial, prácticas profesionales, becariado y servicio social relacionadas con tus habilidades e intereses.</p>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-200 sm:text-base">Descubre opciones de empleo inicial, internships, servicio social y prácticas profesionales relacionadas con tus habilidades e intereses.</p>
           </div>
           <form onSubmit={submitSearch} role="search" className="mt-8 flex w-full max-w-[870px] flex-col gap-2 rounded-2xl border border-white/15 bg-white p-2 shadow-[0_18px_50px_rgba(0,0,0,.24)] sm:flex-row sm:items-center sm:p-2.5">
             <label className="relative block min-w-0 flex-1">

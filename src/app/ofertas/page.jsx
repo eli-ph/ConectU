@@ -5,7 +5,7 @@ import { PublicHeader } from "@/components/public-header";
 
 export const metadata = {
   title: "Explorar ofertas",
-  description: "Explora oportunidades de empleo inicial, becariado, prácticas profesionales y servicio social en ConectU.",
+  description: "Explora oportunidades de empleo inicial, internships, prácticas profesionales y servicio social en ConectU.",
 };
 
 export default function OffersPage() {

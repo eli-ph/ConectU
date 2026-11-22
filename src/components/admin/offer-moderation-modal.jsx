@@ -1,16 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import {
-  AlertTriangle,
-  Ban,
-  BriefcaseBusiness,
-  CheckCircle2,
-  ClipboardCheck,
-  PauseCircle,
-  ShieldAlert,
-  X,
-} from "lucide-react";
+import { AlertTriangle, Ban, CheckCircle2, ClipboardCheck, PauseCircle, ShieldAlert, X } from "lucide-react";
 
 const closureReasons = [
   "Incumplimiento del apoyo económico o beneficios ofrecidos",

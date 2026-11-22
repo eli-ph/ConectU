@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeft, BookOpen, BriefcaseBusiness, CheckCircle2, Clock3, FileText, GraduationCap, Mail, MapPin, ShieldCheck, UserRound, XCircle } from "lucide-react";
+import { ArrowLeft, BookOpen, BriefcaseBusiness, CheckCircle2, Clock3, FileText, GraduationCap, Mail, MapPin, ShieldCheck, XCircle } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 
 const examples = {

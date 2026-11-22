@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, Eye, LockKeyhole, ShieldAlert, UserRound, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, LockKeyhole, ShieldAlert, UserRound, X } from "lucide-react";
 
 const roleNames = { estudiante: "Estudiante", administrador: "Administrador" };
 const statusNames = { activo: "Activo", pendiente: "Pendiente", suspendido: "Suspendido" };

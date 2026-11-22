@@ -6,6 +6,7 @@ import { ArrowRight, Building2, ContactRound, LockKeyhole, ShieldCheck } from "l
 import { AuthCard, AuthShell } from "@/components/auth-shell";
 import { AuthForm, PasswordControl } from "@/components/auth-interactions";
 import { PasswordStrength } from "@/components/password-strength";
+import { AuthSectionTitle } from "@/components/auth-section-title";
 import { Field, inputClass, textareaClass } from "@/components/dashboard-ui";
 
 
@@ -25,7 +26,7 @@ export default function CompanyRegisterPage() {
       <AuthCard title="Datos de la organización" description="Los datos de la empresa y de la cuenta de acceso se registran una sola vez.">
         <AuthForm actionLabel="registrar empresa" className="space-y-9">
           <section>
-            <SectionTitle icon={Building2} title="1. Datos fiscales y corporativos" />
+            <AuthSectionTitle icon={Building2} title="1. Datos fiscales y corporativos" tone="navy" />
             <div className="grid gap-x-5 gap-y-5 sm:grid-cols-2">
               <Field label="Razón social" className="sm:col-span-2"><input className={inputClass} name="razon_social" required placeholder="Nombre fiscal completo" autoComplete="organization" /></Field>
               <Field label="Nombre comercial"><input className={inputClass} name="nombre_comercial" required placeholder="Nombre visible de la empresa" /></Field>
@@ -39,7 +40,7 @@ export default function CompanyRegisterPage() {
           </section>
 
           <section>
-            <SectionTitle icon={ContactRound} title="2. Ubicación y contacto" />
+            <AuthSectionTitle icon={ContactRound} title="2. Ubicación y contacto" tone="navy" />
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="Estado"><input className={inputClass} name="estado" required placeholder="Entidad federativa" /></Field>
               <Field label="Ciudad o alcaldía"><input className={inputClass} name="ciudad" required placeholder="Ciudad o alcaldía" /></Field>
@@ -51,7 +52,7 @@ export default function CompanyRegisterPage() {
           </section>
 
           <section>
-            <SectionTitle icon={LockKeyhole} title="3. Credenciales de la cuenta" />
+            <AuthSectionTitle icon={LockKeyhole} title="3. Credenciales de la cuenta" tone="navy" />
             <div className="grid gap-5 sm:grid-cols-2">
               <PasswordControl name="password" hint="Mínimo 8 caracteres." value={password} onChange={setPassword} />
               <PasswordControl label="Confirmar contraseña" name="confirm_password" placeholder="Repite tu contraseña" />
@@ -70,8 +71,4 @@ export default function CompanyRegisterPage() {
       </AuthCard>
     </AuthShell>
   );
-}
-
-function SectionTitle({ icon: Icon, title }) {
-  return <h2 className="mb-5 flex items-center gap-3 border-b border-slate-200 pb-3 text-base font-bold text-brand-navy sm:text-lg"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#edf0ff] text-brand-navy"><Icon size={19} aria-hidden="true" /></span>{title}</h2>;
 }

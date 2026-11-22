@@ -2,34 +2,11 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  Archive,
-  Award,
-  CalendarPlus,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  Cpu,
-  FileText,
-  FlaskConical,
-  FolderKanban,
-  Info,
-  Laptop,
-  Pencil,
-  Plus,
-  RefreshCw,
-  Rocket,
-  RotateCcw,
-  Search,
-  Send,
-  Trash2,
-  Users,
-  X,
-} from "lucide-react";
+import { Archive, Award, CalendarPlus, CheckCircle2, Clock, Cpu, FileText, FlaskConical, FolderKanban, Info, Laptop, Pencil, Plus, RefreshCw, Rocket, RotateCcw, Search, Send, Trash2, Users, X } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { CompanyCandidatesModal } from "@/components/company-candidates-modal";
 import { TablePagination } from "@/components/table-pagination";
+import { OFFER_TYPE_OPTIONS } from "@/lib/offer-types";
 
 const MONTHS_SHORT = [
   "Ene",
@@ -464,10 +441,7 @@ export default function CompanyOffersPage() {
               className="select-chevron rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 outline-none transition focus:border-brand-navy"
             >
               <option value="Todos">Tipo: Todos</option>
-              <option value="Empleo">Empleo</option>
-              <option value="Internships">Internships</option>
-              <option value="Servicio social">Servicio social</option>
-              <option value="Prácticas profesionales">Prácticas profesionales</option>
+              {OFFER_TYPE_OPTIONS.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
             </select>
 
             <select

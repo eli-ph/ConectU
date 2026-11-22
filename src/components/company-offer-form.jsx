@@ -1,53 +1,33 @@
 "use client";
 
 import { useState } from "react";
+import { OFFER_TYPE_LABELS } from "@/lib/offer-types";
 import Link from "next/link";
 import { SkillPicker } from "@/components/skill-picker";
-import {
-  ArrowRight,
-  Award,
-  Briefcase,
-  Building2,
-  Calendar,
-  CheckCircle2,
-  ChevronRight,
-  Cpu,
-  FileText,
-  FolderOpen,
-  GraduationCap,
-  MapPin,
-  Minus,
-  Plus,
-  Save,
-  ShieldCheck,
-  Sparkles,
-  Trash2,
-  UploadCloud,
-  X,
-} from "lucide-react";
+import { ArrowRight, Award, Briefcase, Building2, Calendar, CheckCircle2, ChevronRight, Cpu, FileText, FolderOpen, GraduationCap, MapPin, Minus, Plus, Save, ShieldCheck, Sparkles, Trash2, UploadCloud } from "lucide-react";
 
 const offerTypes = [
   {
     id: "empleo",
-    title: "Empleo",
+    title: OFFER_TYPE_LABELS.empleo,
     subtitle: "Nivel inicial",
     icon: GraduationCap,
   },
   {
     id: "internships",
-    title: "Internships",
+    title: OFFER_TYPE_LABELS.internships,
     subtitle: "Programa formativo",
     icon: Sparkles,
   },
   {
     id: "servicio",
-    title: "Servicio social",
+    title: OFFER_TYPE_LABELS.servicio_social,
     subtitle: "Horas oficiales",
     icon: Award,
   },
   {
     id: "practicas",
-    title: "Prácticas profesionales",
+    title: OFFER_TYPE_LABELS.practicas,
     subtitle: "6 a 12 meses",
     icon: Briefcase,
   },

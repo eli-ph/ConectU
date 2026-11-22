@@ -1,31 +1,8 @@
 "use client";
 
-import { useState } from "react";
+
 import Link from "next/link";
-import {
-  Award,
-  BarChart3,
-  BriefcaseBusiness,
-  Building2,
-  Calendar,
-  Check,
-  CheckCircle2,
-  ChevronRight,
-  Clock,
-  Eye,
-  FileCheck2,
-  FileText,
-  GraduationCap,
-  Hourglass,
-  MapPin,
-  Rocket,
-  ShieldCheck,
-  SlidersHorizontal,
-  Timer,
-  TrendingUp,
-  UserCheck,
-  Users,
-} from "lucide-react";
+import { Award, BriefcaseBusiness, Building2, Calendar, Check, CheckCircle2, ChevronRight, Clock, Eye, FileCheck2, FileText, GraduationCap, Hourglass, MapPin, Rocket, ShieldCheck, Timer, TrendingUp, UserCheck, Users } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 
 export default function CompanyDashboard() {

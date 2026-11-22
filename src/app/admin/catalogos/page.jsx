@@ -4,8 +4,6 @@ import { useMemo, useRef, useState } from "react";
 import {
   BrainCircuit,
   Building2,
-  ChevronLeft,
-  ChevronRight,
   Download,
   GraduationCap,
   Layers3,
@@ -18,6 +16,7 @@ import {
   ToggleRight,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { TablePagination } from "@/components/table-pagination";
 
 // Registros ilustrativos tomados de las referencias visuales de Stitch.
 // No representan catálogos cargados desde SQLite ni estadísticas reales.
@@ -68,7 +67,6 @@ const TABS = [
   { id: "habilidades", label: "Habilidades", singular: "Habilidad", icon: BrainCircuit },
 ];
 
-const PAGE_SIZE = 5;
 const inputBase = "w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-brand-navy outline-none transition placeholder:text-slate-400 focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/10";
 const labelBase = "mb-2 block text-xs font-semibold text-slate-700";
 const buttonBase = "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition focus-visible:outline-offset-2";
@@ -107,6 +105,7 @@ export default function AdminCatalogsPage() {
   const [term, setTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
   const [form, setForm] = useState(() => emptyItem("habilidades"));
   const [feedback, setFeedback] = useState("");
   const [formError, setFormError] = useState("");
@@ -120,9 +119,9 @@ export default function AdminCatalogsPage() {
     const categoryMatches = !categoryFilter || (tab === "habilidades" ? item.categoria === categoryFilter : tab === "carreras" ? item.facultad === categoryFilter : true);
     return searchMatches && categoryMatches;
   }), [rows, term, categoryFilter, tab]);
-  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, pages);
-  const visible = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const visible = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   function changeTab(nextTab) {
     setTab(nextTab);
@@ -301,14 +300,11 @@ export default function AdminCatalogsPage() {
             </div>
             {filtered.length === 0 && <div className="p-10 text-center text-sm text-slate-500">No se encontraron resultados con esos filtros.</div>}
 
-            <div className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50/50 px-4 py-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-              <span>Mostrando {visible.length ? (safePage - 1) * PAGE_SIZE + 1 : 0}–{Math.min(safePage * PAGE_SIZE, filtered.length)} de {filtered.length} ejemplos</span>
-              <div className="flex items-center gap-1.5">
-                <button type="button" disabled={safePage <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))} className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 bg-white disabled:opacity-35" aria-label="Página anterior"><ChevronLeft size={16} /></button>
-                <span className="rounded-lg bg-brand-navy px-3 py-1.5 font-semibold text-white">{safePage} / {pages}</span>
-                <button type="button" disabled={safePage >= pages} onClick={() => setPage((value) => Math.min(pages, value + 1))} className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 bg-white disabled:opacity-35" aria-label="Página siguiente"><ChevronRight size={16} /></button>
-              </div>
-            </div>
+            <TablePagination
+              page={safePage} pages={pages} onChange={setPage}
+              total={filtered.length} pageSize={PAGE_SIZE}
+              label="registros de ejemplo"
+            />
           </section>
 
           <section ref={formRef} className="min-w-0 scroll-mt-24 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" aria-label={`Crear o editar ${currentTab.singular.toLowerCase()}`}>

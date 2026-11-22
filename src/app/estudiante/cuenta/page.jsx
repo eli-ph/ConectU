@@ -1,34 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import {
-  Award,
-  BookOpen,
-  Building2,
-  CheckCircle2,
-  Circle,
-  Code2,
-  Download,
-  FileText,
-  GraduationCap,
-  Hash,
-  IdCard,
-  LockKeyhole,
-  LogOut,
-  Mail,
-  MapPin,
-  Plus,
-  Save,
-  ShieldCheck,
-  Sparkles,
-  Upload,
-  User,
-  X,
-} from "lucide-react";
+import { useState } from "react";
+import { Award, BookOpen, Building2, CheckCircle2, Code2, Download, FileText, GraduationCap, Hash, IdCard, LockKeyhole, Mail, MapPin, Save, ShieldCheck, Sparkles, Upload, User } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { PasswordStrength } from "@/components/password-strength";
 import { SkillPicker } from "@/components/skill-picker";
 import { checkPassword } from "@/lib/password-policy";
+import { SEMESTER_NUMBERS } from "@/lib/student-options";
 import { Panel, primaryButton, secondaryButton } from "@/components/dashboard-ui";
 
 function SectionHeader({ icon: Icon, title, description, badge }) {
@@ -250,12 +228,9 @@ export default function StudentAccountPage() {
                   onChange={(e) => setSemester(e.target.value)}
                 >
                   <option value="">Selecciona tu semestre</option>
-                  <option value="5">5to Semestre</option>
-                  <option value="6">6to Semestre</option>
-                  <option value="7">7mo Semestre</option>
-                  <option value="8">8vo Semestre</option>
-                  <option value="9">9no Semestre</option>
-                  <option value="10">10mo Semestre</option>
+                  {SEMESTER_NUMBERS.map((value) => (
+                    <option key={value} value={String(value)}>{value}º semestre</option>
+                  ))}
                 </IconSelect>
               </div>
 

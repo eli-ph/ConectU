@@ -23,7 +23,7 @@ const stats = [
   {
     value: "4",
     title: "Tipos de oportunidades",
-    note: "Empleo, becariado, prácticas y servicio social",
+    note: "Empleo, internships, prácticas y servicio social",
   },
   {
     value: "10",
@@ -90,7 +90,7 @@ const audiences = [
     icon: GraduationCap,
     tag: "Estudiantes",
     title: "Da tus primeros pasos profesionales",
-    text: "Encuentra opciones de empleo inicial, becariado, prácticas profesionales y servicio social.",
+    text: "Encuentra opciones de empleo inicial, internships, prácticas profesionales y servicio social.",
     href: "/ofertas",
     link: "Explorar oportunidades",
   },
@@ -136,7 +136,7 @@ export default function HomePage() {
               Despega tu carrera profesional en <span className="text-[#e6bb5b]">ingeniería</span>
             </h1>
             <p className="mt-5 max-w-[720px] text-sm leading-7 text-slate-200 sm:text-base sm:leading-8">
-              Explora prácticas profesionales, becariado, servicio social y empleo inicial.
+              Explora prácticas profesionales, internships, servicio social y empleo inicial.
               Conectamos a estudiantes activos de la UNAM con empresas que buscan talento universitario.
             </p>
 

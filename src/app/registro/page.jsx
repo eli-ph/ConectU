@@ -9,7 +9,7 @@ const choices = [
     href: "/registro/estudiante",
     icon: GraduationCap,
     title: "Soy estudiante de la UNAM",
-    description: "Encuentra oportunidades de empleo inicial, prácticas profesionales, becariado y servicio social.",
+    description: "Encuentra oportunidades de empleo inicial, prácticas profesionales, internships y servicio social.",
     badge: "Acceso gratuito",
     notice: "El registro, la búsqueda de ofertas y las postulaciones son completamente gratuitos para estudiantes. No se cobran comisiones por postularse.",
     details: ["Registro con correo institucional UNAM", "Un CV vigente en tu perfil", "Seguimiento de tus postulaciones"],

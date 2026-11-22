@@ -1,18 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  Briefcase,
-  CheckCircle2,
-  CalendarDays,
-  FileText,
-  Filter,
-  Megaphone,
-  RotateCcw,
-  Smile,
-  Tag,
-  TrendingUp,
-} from "lucide-react";
+import { CheckCircle2, CalendarDays, FileText, Filter, Megaphone, RotateCcw, Smile, TrendingUp } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { Modal } from "@/components/dashboard-ui";
 import { MonthRangeSelector } from "@/components/month-range-selector";

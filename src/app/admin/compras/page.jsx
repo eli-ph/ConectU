@@ -4,8 +4,6 @@ import { useMemo, useState } from "react";
 import {
   Banknote,
   CalendarDays,
-  ChevronLeft,
-  ChevronRight,
   CreditCard,
   Gift,
   ReceiptText,
@@ -14,6 +12,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { TablePagination } from "@/components/table-pagination";
 
 // Registros de ejemplo procedentes de la versión inicial del repositorio.
 // Los importes se ajustaron a las tarifas ilustrativas definidas para ConectU.
@@ -206,8 +205,6 @@ export default function AdminPurchasesPage() {
   const pages = Math.max(1, Math.ceil(purchases.length / pageSize));
   const currentPage = Math.min(page, pages);
   const visible = purchases.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  const first = purchases.length ? (currentPage - 1) * pageSize + 1 : 0;
-  const last = Math.min(currentPage * pageSize, purchases.length);
   const reset = () => { setPeriod("todos"); setQuery(""); setStatus("todos"); setPage(1); };
 
   return (
@@ -324,25 +321,12 @@ export default function AdminPurchasesPage() {
           <div className="px-6 py-12 text-center text-sm text-slate-500">No se encontraron movimientos con estos filtros.</div>
         )}
 
-        <div className="flex flex-col items-start justify-between gap-3 border-t border-slate-200 bg-[#f3f4fc] px-4 py-3.5 text-xs text-slate-600 sm:flex-row sm:items-center sm:px-5">
-          <div className="flex flex-wrap items-center gap-3">
-            <span>Mostrando {first}–{last} de {purchases.length} ejemplos</span>
-            <label className="flex items-center gap-2">
-              Filas por página
-              <select value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1); }} className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-brand-navy">
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-              </select>
-            </label>
-          </div>
-          <nav aria-label="Páginas de transacciones" className="flex items-center gap-1.5">
-            <button type="button" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)} aria-label="Página anterior" className="grid h-9 w-9 place-items-center rounded-lg bg-white text-brand-navy transition hover:bg-slate-100 disabled:opacity-40"><ChevronLeft size={16} /></button>
-            <span aria-current="page" className="grid h-9 min-w-9 place-items-center rounded-lg bg-brand-navy px-2 text-xs font-bold text-white">{currentPage}</span>
-            <span className="px-1 text-xs text-slate-500">/ {pages}</span>
-            <button type="button" disabled={currentPage === pages} onClick={() => setPage(currentPage + 1)} aria-label="Página siguiente" className="grid h-9 w-9 place-items-center rounded-lg bg-white text-brand-navy transition hover:bg-slate-100 disabled:opacity-40"><ChevronRight size={16} /></button>
-          </nav>
-        </div>
+        <TablePagination
+          page={currentPage} pages={pages} onChange={setPage}
+          total={purchases.length} pageSize={pageSize}
+          onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+          label="compras de ejemplo"
+        />
       </section>
     </DashboardShell>
   );

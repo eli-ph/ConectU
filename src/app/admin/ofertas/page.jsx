@@ -4,8 +4,6 @@ import { useCallback, useMemo, useState } from "react";
 import {
   BriefcaseBusiness,
   CalendarClock,
-  ChevronLeft,
-  ChevronRight,
   Download,
   Filter,
   Gavel,
@@ -17,19 +15,21 @@ import {
   X,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { TablePagination } from "@/components/table-pagination";
+import { OFFER_TYPE_OPTIONS } from "@/lib/offer-types";
 import { OfferModerationModal } from "@/components/admin/offer-moderation-modal";
 
 // Datos de interfaz para el diseño. No son registros recuperados de SQLite.
 const exampleOffers = [
   {
     id: "ejemplo-1", title: "Desarrollo frontend · nivel inicial", company: "Empresa tecnológica",
-    type: "Becariado", typeLabel: "Becariado", mode: "Híbrida", axis: "Ciencia y tecnología",
+    type: "Internships", typeLabel: "Internships", mode: "Híbrida", axis: "Ciencia y tecnología",
     promoted: true, vacancies: "—", applications: "—", published: "—", expires: "—",
     description: "Participa en la construcción de interfaces web y colabora con un equipo de producto.",
   },
   {
     id: "ejemplo-2", title: "Análisis de datos para operaciones", company: "Organización de servicios",
-    type: "Prácticas", typeLabel: "Prácticas profesionales", mode: "Remota", axis: "Ciencia y tecnología",
+    type: "Prácticas profesionales", typeLabel: "Prácticas profesionales", mode: "Remota", axis: "Ciencia y tecnología",
     promoted: false, vacancies: "—", applications: "—", published: "—", expires: "—",
     description: "Apoya el análisis de información operativa y la preparación de tableros de seguimiento.",
   },
@@ -41,19 +41,19 @@ const exampleOffers = [
   },
   {
     id: "ejemplo-4", title: "Ingeniería de soporte junior", company: "Consultoría de tecnología",
-    type: "Empleo", typeLabel: "Empleo inicial", mode: "Híbrida", axis: "Ciencia y tecnología",
+    type: "Empleo", typeLabel: "Empleo", mode: "Híbrida", axis: "Ciencia y tecnología",
     promoted: false, vacancies: "—", applications: "—", published: "—", expires: "—",
     description: "Atiende requerimientos técnicos y contribuye a mejorar las guías internas del equipo.",
   },
   {
     id: "ejemplo-5", title: "Diseño mecánico y prototipado 3D", company: "Estudio de ingeniería",
-    type: "Prácticas", typeLabel: "Prácticas profesionales", mode: "Presencial", axis: "Industria y energía",
+    type: "Prácticas profesionales", typeLabel: "Prácticas profesionales", mode: "Presencial", axis: "Industria y energía",
     promoted: false, vacancies: "—", applications: "—", published: "—", expires: "—",
     description: "Apoya la elaboración de modelos, planos y prototipos para proyectos de desarrollo de producto.",
   },
   {
     id: "ejemplo-6", title: "Desarrollo IoT para monitoreo", company: "Organización de tecnología",
-    type: "Becariado", typeLabel: "Becariado", mode: "Remota", axis: "Ciencia y tecnología",
+    type: "Internships", typeLabel: "Internships", mode: "Remota", axis: "Ciencia y tecnología",
     promoted: false, vacancies: "—", applications: "—", published: "—", expires: "—",
     description: "Colabora en prototipos de sensores y visualización de datos para aplicaciones conectadas.",
   },
@@ -166,8 +166,6 @@ export default function AdminOffersPage() {
   const safePage = Math.min(page, pageCount);
   const start = (safePage - 1) * perPage;
   const visibleOffers = filteredOffers.slice(start, start + perPage);
-  const beginning = filteredOffers.length ? start + 1 : 0;
-  const ending = Math.min(start + perPage, filteredOffers.length);
 
   function changeFilter(name, value) { setFilters((previous) => ({ ...previous, [name]: value })); setPage(1); }
   function changeSearch(value) { setSearch(value); setPage(1); }
@@ -210,7 +208,7 @@ export default function AdminOffersPage() {
           {filtersVisible && (
             <div id="filtros-avanzados" className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 xl:items-end">
               <FilterField label="Empresa" value={filters.company} onChange={(v) => changeFilter("company", v)} all="Todas las empresas" options={uniqueOptions("company")} />
-              <FilterField label="Tipo" value={filters.type} onChange={(v) => changeFilter("type", v)} all="Todos los tipos" options={uniqueOptions("type")} />
+              <FilterField label="Tipo" value={filters.type} onChange={(v) => changeFilter("type", v)} all="Todos los tipos" options={OFFER_TYPE_OPTIONS} />
               <FilterField label="Modalidad" value={filters.mode} onChange={(v) => changeFilter("mode", v)} all="Todas" options={uniqueOptions("mode")} />
               <FilterField label="Eje de acción" value={filters.axis} onChange={(v) => changeFilter("axis", v)} all="Todos los ejes" options={uniqueOptions("axis")} />
               <FilterField label="Promoción" value={filters.promotion} onChange={(v) => changeFilter("promotion", v)} all="Todas" options={[{ value: "yes", label: "Promocionadas" }, { value: "no", label: "Estándar" }]} />
@@ -266,14 +264,12 @@ export default function AdminOffersPage() {
             </table>
           </div>
 
-          <div className="flex flex-col gap-3 bg-[#eef3ff] px-4 py-3 text-[12px] text-slate-600 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap items-center gap-3"><span>Mostrando <strong className="text-brand-navy">{beginning} a {ending}</strong> de <strong className="text-brand-navy">{filteredOffers.length}</strong> ofertas de ejemplo</span><label className="flex items-center gap-2">Filas por página: <select aria-label="Filas por página" value={perPage} onChange={(event) => { setPerPage(Number(event.target.value)); setPage(1); }} className="h-8 rounded-md border border-slate-200 bg-white px-2 font-semibold text-brand-navy"><option value={5}>5</option><option value={10}>10</option><option value={25}>25</option></select></label></div>
-            <nav aria-label="Paginación de ofertas" className="flex items-center gap-1">
-              <button type="button" disabled={safePage === 1} aria-label="Página anterior" onClick={() => setPage((current) => Math.max(1, current - 1))} className="grid h-8 w-8 place-items-center rounded-md bg-white text-brand-navy disabled:opacity-40"><ChevronLeft size={16} /></button>
-              {Array.from({ length: pageCount }, (_, index) => index + 1).map((number) => <button key={number} type="button" aria-current={safePage === number ? "page" : undefined} onClick={() => setPage(number)} className={`grid h-8 min-w-8 place-items-center rounded-md px-2 text-[12px] font-bold ${safePage === number ? "bg-brand-navy text-white" : "bg-white text-brand-navy hover:bg-slate-100"}`}>{number}</button>)}
-              <button type="button" disabled={safePage === pageCount} aria-label="Página siguiente" onClick={() => setPage((current) => Math.min(pageCount, current + 1))} className="grid h-8 w-8 place-items-center rounded-md bg-white text-brand-navy disabled:opacity-40"><ChevronRight size={16} /></button>
-            </nav>
-          </div>
+          <TablePagination
+            page={safePage} pages={pageCount} onChange={setPage}
+            total={filteredOffers.length} pageSize={perPage}
+            onPageSizeChange={(size) => { setPerPage(size); setPage(1); }}
+            label="ofertas de ejemplo"
+          />
         </section>
       </div>
       <OfferModerationModal offer={selectedOffer} onClose={closeModal} />

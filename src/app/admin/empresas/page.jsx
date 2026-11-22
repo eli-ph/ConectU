@@ -13,6 +13,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { TablePagination } from "@/components/table-pagination";
 import { CompanyDetailModal } from "@/components/admin/company-detail-modal";
 
 // Información de muestra para preparar la interfaz. Los registros reales
@@ -65,6 +66,8 @@ export default function AdminCompaniesPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("Todas");
   const [sector, setSector] = useState("Todos");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
 
   const sectors = useMemo(() => [...new Set(companies.map((company) => company.sector))].sort(), []);
 
@@ -79,11 +82,16 @@ export default function AdminCompaniesPage() {
     });
   }, [search, status, sector]);
 
+  const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, pages);
+  const visibleCompanies = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+
   const activeFilters = Boolean(search || status !== "Todas" || sector !== "Todos");
   const clearFilters = () => {
     setSearch("");
     setStatus("Todas");
     setSector("Todos");
+    setPage(1);
   };
 
   return (
@@ -108,7 +116,7 @@ export default function AdminCompaniesPage() {
                 <button
                   key={tab.value}
                   type="button"
-                  onClick={() => setStatus(tab.value)}
+                  onClick={() => { setStatus(tab.value); setPage(1); }}
                   aria-pressed={status === tab.value}
                   className={`min-h-10 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
                     status === tab.value
@@ -129,7 +137,7 @@ export default function AdminCompaniesPage() {
               <input
                 type="search"
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => { setSearch(event.target.value); setPage(1); }}
                 placeholder="Buscar empresa, sector o ubicación"
                 className="h-12 w-full rounded-xl border border-slate-200 bg-[#f8fafc] pl-11 pr-4 text-sm text-brand-navy outline-none transition focus:border-brand-navy focus:bg-white focus:ring-2 focus:ring-brand-navy/10"
               />
@@ -138,7 +146,7 @@ export default function AdminCompaniesPage() {
               <span className="sr-only">Filtrar por sector</span>
               <select
                 value={sector}
-                onChange={(event) => setSector(event.target.value)}
+                onChange={(event) => { setSector(event.target.value); setPage(1); }}
                 className="select-chevron h-12 w-full rounded-xl border border-slate-200 bg-[#f8fafc] px-4 text-sm text-brand-navy outline-none transition focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/10"
               >
                 <option value="Todos">Todos los sectores</option>
@@ -177,7 +185,7 @@ export default function AdminCompaniesPage() {
           ) : (
             <>
               <div className="grid gap-3 p-4 sm:hidden">
-                {filtered.map((company) => (
+                {visibleCompanies.map((company) => (
                   <article key={company.id} className="rounded-2xl border border-slate-200 bg-white p-4">
                     <div className="flex items-start gap-3">
                       <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#edf0ff] text-xs font-extrabold text-brand-navy">{initials(company.name)}</span>
@@ -212,7 +220,7 @@ export default function AdminCompaniesPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filtered.map((company) => (
+                    {visibleCompanies.map((company) => (
                       <tr key={company.id} className="transition-colors hover:bg-[#fafbff]">
                         <td className="px-5 py-4 sm:px-6">
                           <div className="flex items-center gap-3">
@@ -242,9 +250,12 @@ export default function AdminCompaniesPage() {
               </div>
             </>
           )}
-          <div className="border-t border-slate-100 bg-[#f8f9fd] px-5 py-4 text-xs text-slate-500 sm:px-6">
-            {filtered.length} {filtered.length === 1 ? "empresa visible" : "empresas visibles"} en el directorio
-          </div>
+          <TablePagination
+            page={safePage} pages={pages} onChange={setPage}
+            total={filtered.length} pageSize={pageSize}
+            onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+            label="empresas"
+          />
         </section>
       </div>
       <CompanyDetailModal company={selected} onClose={() => setSelected(null)} />
