@@ -302,7 +302,7 @@ export default function AdminCatalogsPage() {
 
             <TablePagination
               page={safePage} pages={pages} onChange={setPage}
-              total={filtered.length} pageSize={PAGE_SIZE}
+              total={filtered.length} pageSize={pageSize}
               label="registros de ejemplo"
             />
           </section>
