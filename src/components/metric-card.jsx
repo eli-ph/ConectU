@@ -1,19 +1,59 @@
-export function MetricCard({ icon: Icon, label, value, detail, tone = "navy" }) {
+export function MetricCard({
+  icon: Icon,
+  label,
+  value,
+  unit,
+  detail,
+  meta,
+  rightNote,
+  tone = "navy",
+}) {
   const tones = {
-    navy: "bg-brand-navy/8 text-brand-navy ring-brand-navy/10",
-    gold: "bg-brand-gold-soft text-brand-gold-dark ring-brand-gold/20",
-    blue: "bg-sky-50 text-sky-700 ring-sky-100",
-    green: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+    navy: "bg-slate-100 text-brand-navy",
+    gold: "bg-amber-50 text-amber-600",
+    blue: "bg-indigo-50 text-indigo-600",
+    green: "bg-emerald-50 text-emerald-600",
   };
 
   return (
-    <article className="ui-card min-w-0 p-5 transition-shadow duration-200 hover:shadow-card sm:p-6">
-      <span className={`mb-5 grid h-11 w-11 place-items-center rounded-xl ring-1 ${tones[tone] || tones.navy}`}>
-        <Icon size={21} aria-hidden="true" />
-      </span>
-      <p className="text-sm font-semibold leading-5 text-slate-500">{label}</p>
-      <p className="mt-2 break-words text-2xl font-bold leading-tight tracking-[-0.035em] text-brand-navy sm:text-[1.7rem]">{value}</p>
-      {detail && <p className="mt-2 text-xs leading-5 text-slate-500">{detail}</p>}
+    <article className="flex min-w-0 flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
+      <div>
+        {/* Fila superior: etiqueta a la izquierda e ícono a la derecha */}
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            {label}
+          </p>
+          {Icon && (
+            <span
+              className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${tones[tone]}`}
+            >
+              <Icon size={18} />
+            </span>
+          )}
+        </div>
+
+        {/* Fila central: número grande + descripción corta */}
+        <div className="mt-3 flex flex-wrap items-baseline gap-1.5">
+          <span className="text-3xl font-bold tracking-tight text-slate-900">
+            {value}
+          </span>
+          {unit && (
+            <span className="text-xs font-medium text-slate-500">{unit}</span>
+          )}
+        </div>
+
+        {detail && <p className="mt-1 text-xs text-slate-500">{detail}</p>}
+      </div>
+
+      {/* Fila inferior: pie de ficha */}
+      {(meta || rightNote) && (
+        <div className="mt-4 flex items-center justify-between gap-2 pt-2 text-[11px] text-slate-500">
+          <span className="truncate font-medium">{meta}</span>
+          {rightNote && (
+            <span className="shrink-0 text-slate-400">{rightNote}</span>
+          )}
+        </div>
+      )}
     </article>
   );
 }
