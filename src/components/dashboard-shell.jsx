@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
+  Award,
   BarChart3,
   Bell,
   BriefcaseBusiness,
@@ -33,7 +34,7 @@ const navigation = {
   empresa: [
     ["/empresa", "Resumen", LayoutDashboard],
     ["/empresa/ofertas", "Mis ofertas", BriefcaseBusiness],
-    ["/empresa/plan", "Plan y promociones", CreditCard],
+    ["/empresa/plan", "Plan y promociones", Award],
     ["/empresa/compras", "Compras", ClipboardList],
     ["/empresa/estadisticas", "Estadísticas", BarChart3],
     ["/empresa/cuenta", "Mi cuenta", CircleUserRound],
@@ -49,12 +50,35 @@ const navigation = {
 };
 
 const roleMeta = {
-  estudiante: { label: "Panel del estudiante", name: "David Hernández", initials: "DH" },
-  empresa: { label: "Panel empresarial", name: "Empresa demostrativa", initials: "ED" },
-  admin: { label: "Panel administrativo", name: "Administración", initials: "AD" },
+  estudiante: {
+    label: "Panel del estudiante",
+    name: "David Hernández",
+    subrole: "Estudiante",
+    initials: "DH",
+  },
+  empresa: {
+    label: "Panel empresarial",
+    name: "TechCorp Global",
+    subrole: "Recursos Humanos",
+    initials: "TG",
+  },
+  admin: {
+    label: "Panel administrativo",
+    name: "Administración",
+    subrole: "Administrador",
+    initials: "AD",
+  },
 };
 
-export function DashboardShell({ role, title, eyebrow, description, children }) {
+export function DashboardShell({
+  role,
+  title,
+  eyebrow,
+  description,
+  badge,
+  hidePageHeader = false,
+  children,
+}) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -188,12 +212,21 @@ export function DashboardShell({ role, title, eyebrow, description, children }) 
               <Menu size={21} />
             </button>
             <div className="min-w-0">
-              <p className="hidden text-xs font-medium text-slate-500 sm:block">
-                {meta.label}
-              </p>
-              <p className="truncate text-sm font-bold text-brand-navy sm:text-base">
-                {title}
-              </p>
+              {!hidePageHeader && (
+                <p className="hidden text-xs font-medium text-slate-500 sm:block">
+                  {meta.label}
+                </p>
+              )}
+              <div className="flex items-center gap-2.5">
+                <p className="truncate text-sm font-bold text-brand-navy sm:text-base">
+                  {title}
+                </p>
+                {badge && (
+                  <span className="rounded-md bg-brand-gold-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#765600]">
+                    {badge}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -221,11 +254,7 @@ export function DashboardShell({ role, title, eyebrow, description, children }) 
                   {meta.name}
                 </span>
                 <span className="block text-[0.7rem] text-slate-500">
-                  {role === "admin"
-                    ? "Administrador"
-                    : role === "empresa"
-                    ? "Empresa"
-                    : "Estudiante"}
+                  {meta.subrole}
                 </span>
               </span>
             </Link>
@@ -302,15 +331,17 @@ export function DashboardShell({ role, title, eyebrow, description, children }) 
           className="min-w-0 px-4 py-6 sm:px-6 sm:py-8 xl:px-9 xl:py-9"
         >
           <div className="mx-auto w-full min-w-0 max-w-[1440px]">
-            <div className="mb-6 sm:mb-8">
-              {eyebrow && <p className="ui-eyebrow mb-2">{eyebrow}</p>}
-              <h1 className="ui-heading text-2xl sm:text-3xl">{title}</h1>
-              {description && (
-                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-500">
-                  {description}
-                </p>
-              )}
-            </div>
+            {!hidePageHeader && (
+              <div className="mb-6 sm:mb-8">
+                {eyebrow && <p className="ui-eyebrow mb-2">{eyebrow}</p>}
+                <h1 className="ui-heading text-2xl sm:text-3xl">{title}</h1>
+                {description && (
+                  <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-500">
+                    {description}
+                  </p>
+                )}
+              </div>
+            )}
             {children}
           </div>
         </main>
