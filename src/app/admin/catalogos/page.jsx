@@ -8,7 +8,6 @@ import {
   GraduationCap,
   Layers3,
   Pencil,
-  Plus,
   RotateCcw,
   Save,
   Search,
@@ -187,9 +186,6 @@ export default function AdminCatalogsPage() {
                   </select>
                 </label>
               )}
-              <button type="button" onClick={startNew} className={`${buttonBase} shrink-0 bg-brand-navy text-white hover:bg-brand-navy-light`}>
-                <Plus size={17} aria-hidden="true" /> Nuevo
-              </button>
             </div>
 
             <div className="hidden overflow-x-auto md:block">
