@@ -50,7 +50,13 @@ export function StudentApplications({initialApplications=[]}){
     </div>
     <section className="ui-card overflow-hidden">
       <div className="flex flex-wrap items-end gap-3 border-b border-slate-100 p-4 sm:p-5">
-        <label className="min-w-[190px] flex-1 text-xs font-semibold text-slate-600"><span>Buscar</span><div className="relative mt-2"><Search size={16} className="absolute left-3 top-3 text-slate-400"/><input className="ui-control pl-10" placeholder="Oferta o empresa" value={query} onChange={e=>{setQuery(e.target.value);setPage(1);}}/></div></label>
+        <label className="min-w-[190px] flex-1 text-xs font-semibold text-slate-600">
+          <span>Buscar</span>
+          <span className="relative mt-2 block">
+            <Search size={16} aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+            <input className="ui-control" style={{paddingLeft:'2.5rem'}} placeholder="Oferta o empresa" value={query} onChange={e=>{setQuery(e.target.value);setPage(1);}}/>
+          </span>
+        </label>
         <label className="min-w-[190px] flex-1 text-xs font-semibold text-slate-600">Tipo de oferta<select className="ui-control mt-2" value={type} onChange={e=>{setType(e.target.value);setPage(1);}}><option value="Todos">Todos los tipos</option>{Object.entries(OFFER_TYPE_LABELS).map(([v,l])=><option value={v} key={v}>{l}</option>)}</select></label>
         <label className="min-w-[160px] text-xs font-semibold text-slate-600">Ordenar<select className="ui-control mt-2" value={sort} onChange={e=>{setSort(e.target.value);setPage(1);}}><option value="recientes">Más recientes</option><option value="antiguas">Más antiguas</option></select></label>
       </div>

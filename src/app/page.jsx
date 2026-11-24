@@ -153,21 +153,24 @@ export default function HomePage() {
               className="mt-9 w-full max-w-[1050px] rounded-[1.25rem] border border-white/20 bg-white p-3 text-left text-slate-900 shadow-[0_24px_65px_rgba(0,0,0,0.23)] sm:mt-11 sm:p-4"
             >
               <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_auto] lg:items-center">
-                <label className="relative block min-w-0">
+                <label className="block min-w-0">
                   <span className="mb-1 block pl-1 text-[0.65rem] font-bold uppercase tracking-[0.09em] text-slate-500">
                     Rol o competencia
                   </span>
-                  <Search
-                    size={18}
-                    className="pointer-events-none absolute bottom-3 left-3.5 text-slate-400"
-                    aria-hidden="true"
-                  />
-                  <input
-                    name="q"
-                    type="search"
-                    placeholder="Ej. Python, mecatrónica, QA..."
-                    className="ui-control h-12 min-w-0 pl-11 text-sm"
-                  />
+                  <span className="relative block">
+                    <Search
+                      size={18}
+                      className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                      aria-hidden="true"
+                    />
+                    <input
+                      name="q"
+                      type="search"
+                      placeholder="Ej. Python, mecatrónica, QA..."
+                      className="ui-control h-12 min-w-0 text-sm"
+                      style={{ paddingLeft: '2.75rem' }}
+                    />
+                  </span>
                 </label>
                 <label className="block min-w-0">
                   <span className="mb-1 block pl-1 text-[0.65rem] font-bold uppercase tracking-[0.09em] text-slate-500">
