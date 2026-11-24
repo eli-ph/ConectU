@@ -10,6 +10,15 @@ import { AuthSectionTitle } from "@/components/auth-section-title";
 import { Field, inputClass, textareaClass } from "@/components/dashboard-ui";
 
 
+async function enviarRegistro(formData) {
+  const response = await fetch("/api/auth/empresa/registro", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(Object.fromEntries(formData.entries())),
+  });
+  return response.json();
+}
+
 export default function CompanyRegisterPage() {
   const [password, setPassword] = useState("");
   return (
@@ -24,7 +33,7 @@ export default function CompanyRegisterPage() {
         <p className="leading-6"><strong>Aprobación administrativa.</strong> Después del registro podrás consultar tu cuenta. Para publicar ofertas o contratar planes y promociones, la empresa deberá ser aprobada por un administrador.</p>
       </div>
       <AuthCard title="Datos de la organización" description="Los datos de la empresa y de la cuenta de acceso se registran una sola vez.">
-        <AuthForm actionLabel="registrar empresa" className="space-y-9">
+        <AuthForm actionLabel="registrar empresa" submitAction={enviarRegistro} className="space-y-9">
           <section>
             <AuthSectionTitle icon={Building2} title="1. Datos fiscales y corporativos" tone="navy" />
             <div className="grid gap-x-5 gap-y-5 sm:grid-cols-2">
@@ -33,7 +42,7 @@ export default function CompanyRegisterPage() {
               <Field label="RFC"><input className={inputClass} name="rfc" required minLength={12} maxLength={13} placeholder="RFC con homoclave" autoCapitalize="characters" /></Field>
               <Field label="Tipo de contribuyente"><select className={`${inputClass} select-chevron`} name="tipo_contribuyente" defaultValue="" required><option value="" disabled>Selecciona una opción</option><option value="fisica">Persona física</option><option value="moral">Persona moral</option></select></Field>
               <Field label="Sector o rama"><select className={`${inputClass} select-chevron`} name="sector" defaultValue="" required><option value="" disabled>Selecciona el sector</option><option>Tecnología</option><option>Servicios</option><option>Industria</option><option>Educación</option><option>Otro</option></select></Field>
-              <Field label="Tamaño de la organización"><select className={`${inputClass} select-chevron`} name="tamano" defaultValue=""><option value="">Selecciona el tamaño</option><option>1 a 10 colaboradores</option><option>11 a 50 colaboradores</option><option>51 a 250 colaboradores</option><option>Más de 250 colaboradores</option></select></Field>
+              <Field label="Tamaño de la organización"><select className={`${inputClass} select-chevron`} name="tamano" defaultValue=""><option value="">Selecciona el tamaño</option><option value="micro">1 a 10 colaboradores</option><option value="pequena">11 a 50 colaboradores</option><option value="mediana">51 a 250 colaboradores</option><option value="grande">Más de 250 colaboradores</option></select></Field>
               <Field label="Sitio web (opcional)"><input className={inputClass} name="sitio_web" type="url" placeholder="https://www.empresa.com" /></Field>
               <Field label="Descripción de la organización" className="sm:col-span-2"><textarea className={textareaClass} name="descripcion" rows={3} placeholder="¿A qué se dedica la empresa?" /></Field>
             </div>

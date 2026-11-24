@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Building2,
   CheckCircle2,
@@ -16,14 +16,21 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { TablePagination } from "@/components/table-pagination";
 import { CompanyDetailModal } from "@/components/admin/company-detail-modal";
 
-// Información de muestra para preparar la interfaz. Los registros reales
-// se obtendrán del repositorio de empresas al conectar SQLite.
-const companies = [
-  { id: 1, name: "Empresa demostrativa", sector: "Tecnología", location: "Ciudad de México", state: "Pendiente" },
-  { id: 2, name: "Organización ejemplo", sector: "Servicios", location: "Estado de México", state: "Aprobada" },
-  { id: 3, name: "Industria demostrativa", sector: "Industria", location: "Querétaro", state: "Aprobada" },
-  { id: 4, name: "Institución ejemplo", sector: "Educación", location: "Puebla", state: "Rechazada" },
-];
+const estados = { pendiente: "Pendiente", aprobada: "Aprobada", rechazada: "Rechazada", suspendida: "Suspendida" };
+
+function normalizarEmpresa(row) {
+  return {
+    ...row,
+    name: row.nombre_comercial,
+    sector: row.sector || "Sin especificar",
+    location: [row.ciudad, row.entidad].filter(Boolean).join(", ") || "—",
+    state: estados[row.estado_verificacion] || "Pendiente",
+    estado: row.entidad,
+    contacto: row.contacto_nombre,
+    cargo: row.contacto_cargo,
+    correo: row.email,
+  };
+}
 
 const statusTabs = [
   { value: "Todas", label: "Todas" },
@@ -63,13 +70,49 @@ function StatusBadge({ state }) {
 
 export default function AdminCompaniesPage() {
   const [selected, setSelected] = useState(null);
+  const [companies, setCompanies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
+  async function cargarEmpresas() {
+    const res = await fetch("/api/admin/empresas", { cache: "no-store" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "No fue posible consultar las empresas.");
+    setCompanies(data.empresas.map(normalizarEmpresa));
+    setLoadError("");
+  }
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/admin/empresas", { cache: "no-store" })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Error al cargar las empresas.");
+        if (active) { setCompanies(data.empresas.map(normalizarEmpresa)); setLoadError(""); }
+      })
+      .catch((error) => { if (active) setLoadError(error.message); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
+
+  async function decidir(company, estado, motivo) {
+    const res = await fetch("/api/admin/empresas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ empresaId: company.id, estado, motivo }),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.message || "No se pudo guardar la revisión.");
+    await cargarEmpresas();
+    setSelected(null);
+  }
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("Todas");
   const [sector, setSector] = useState("Todos");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
 
-  const sectors = useMemo(() => [...new Set(companies.map((company) => company.sector))].sort(), []);
+  const sectors = useMemo(() => [...new Set(companies.map((company) => company.sector))].sort(), [companies]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLocaleLowerCase("es");
@@ -80,7 +123,7 @@ export default function AdminCompaniesPage() {
       return matchesSearch && (status === "Todas" || company.state === status) &&
         (sector === "Todos" || company.sector === sector);
     });
-  }, [search, status, sector]);
+  }, [search, status, sector, companies]);
 
   const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, pages);
@@ -109,6 +152,8 @@ export default function AdminCompaniesPage() {
           </span>
         </div>
 
+        {loading && <p role="status" className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">Consultando empresas registradas...</p>}
+        {loadError && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">{loadError}</p>}
         <section aria-label="Filtros del directorio" className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-soft">
           <div className="border-b border-slate-100 p-3 sm:px-5 sm:py-4">
             <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por estado">
@@ -258,7 +303,7 @@ export default function AdminCompaniesPage() {
           />
         </section>
       </div>
-      <CompanyDetailModal company={selected} onClose={() => setSelected(null)} />
+      <CompanyDetailModal company={selected} onClose={() => setSelected(null)} onDecide={decidir} />
     </DashboardShell>
   );
 }

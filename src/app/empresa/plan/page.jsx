@@ -1,5 +1,9 @@
 "use client";
 
+
+
+import { StripeCurrentPlan, StripePlanSection, StripeAdditionalPromotion } from "@/components/stripe-commerce-panel";
+import { IncludedPromotionsOverview, IncludedPromotionsActivation } from "@/components/included-promotion-panel";
 import { useMemo, useState } from "react";
 import {
   ArrowRight,
@@ -196,57 +200,12 @@ export default function CompanyPlanPage() {
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-brand-navy sm:text-3xl">Plan y promociones</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Gestiona tu plan de publicación y destaca ofertas cuando lo necesites. Las promociones se asignan a la oferta elegida al activarse.</p>
         </div>
+        <StripeCurrentPlan />
 
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-[#102a4b] px-5 py-5 text-white sm:px-7">
-            <div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-[#ead29a]"><BadgeCheck size={14} /> Plan vigente</span>
-              <h2 className="mt-3 text-2xl font-bold">{currentPlan.name}</h2>
-              <p className="mt-1 text-sm text-slate-200">30 días por periodo · Renovación manual</p>
-            </div>
-            <span className="rounded-xl bg-white/10 px-4 py-3 text-right text-sm font-semibold">{formatPrice(currentPlan.price)} MXN <span className="block text-xs font-normal text-slate-200">por periodo</span></span>
-          </div>
-          <div className="p-5 sm:p-7">
-            <div>
-              <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                <span className="font-semibold text-brand-navy">Capacidad del plan</span>
-                <span className="font-bold text-brand-navy">{currentOffers.length} de {currentPlan.offerLimit ?? "∞"} ofertas de ejemplo</span>
-              </div>
-              {currentPlan.offerLimit != null && (
-                <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-[#c7a253]" style={{ width: `${Math.min(100, currentOffers.length / currentPlan.offerLimit * 100)}%` }} /></div>
-              )}
-              <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-600">
-                <span className="rounded-full bg-slate-100 px-3 py-1.5">{describePlanCapacity(currentPlan)}</span>
-                <span className="rounded-full bg-slate-100 px-3 py-1.5">Estadísticas incluidas</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section aria-label="Planes disponibles" className="space-y-4">
-          <SmallHeading icon={CreditCard} title="Contratar o renovar un plan" description="Elige el plan que necesitas. Un cambio a otro plan pagado inicia un nuevo periodo de 30 días, sin prorrateos." />
-          <div className="grid gap-4 lg:grid-cols-3">
-            {PLAN_CATALOG.map((plan) => <PlanOption key={plan.id} plan={plan} currentPlanId={currentPlan.id} onChoose={beginPlanCheckout} />)}
-          </div>
-        </section>
+        <StripePlanSection />
 
         <section className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
-          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <SmallHeading icon={BriefcaseBusiness} title="Mis promociones" description="Cada promoción activa está vinculada a una oferta; no existe un inventario de promociones pendientes." />
-            <div className="mt-5 flex flex-wrap gap-3">
-              <div className="min-w-[110px] flex-1 rounded-xl bg-[#f7f9fc] p-4"><strong className="block text-2xl text-brand-navy">{activePromotionCount}</strong><span className="text-xs text-slate-500">En uso (ejemplo)</span></div>
-              <div className="min-w-[110px] flex-1 rounded-xl bg-[#f7f9fc] p-4"><strong className="block text-2xl text-brand-navy">{previewSubscription.includedUsed}</strong><span className="text-xs text-slate-500">Incluidas utilizadas</span></div>
-              <div className="min-w-[110px] flex-1 rounded-xl bg-[#f7f9fc] p-4"><strong className="block text-2xl text-brand-navy">{availableIncluded}</strong><span className="text-xs text-slate-500">Activaciones restantes</span></div>
-            </div>
-            <div className="mt-5 space-y-2">
-              {previewOffers.filter((offer) => offer.promoted).map((offer) => (
-                <div key={offer.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
-                  <div className="min-w-0"><p className="text-sm font-semibold text-brand-navy">{offer.name}</p><p className="mt-1 text-xs text-slate-500">Oferta con promoción vigente · ejemplo</p></div>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-[#fff3d6] px-3 py-1 text-xs font-semibold text-[#846013]"><Sparkles size={13} /> En uso</span>
-                </div>
-              ))}
-            </div>
-          </article>
+          <IncludedPromotionsOverview />
           <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <SmallHeading icon={ShieldCheck} title="Reglas de continuidad" />
             <ul className="mt-5 space-y-4 text-sm leading-6 text-slate-600">
@@ -260,44 +219,11 @@ export default function CompanyPlanPage() {
         </section>
 
         <section className="grid gap-5 xl:grid-cols-[1.08fr_1fr]">
-          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <SmallHeading icon={Gift} title="Utilizar una promoción incluida" description="No hay nada que asignar por adelantado: selecciona una oferta y consume una activación de tu plan." />
-              <span className="rounded-full bg-[#eef1fb] px-3 py-1.5 text-xs font-bold text-brand-navy">{availableIncluded} disponible{availableIncluded === 1 ? "" : "s"} de {currentPlan.includedPromotions}</span>
-            </div>
-            <div className="mt-5 rounded-xl bg-[#f7f9fc] px-4 py-4 text-sm leading-6 text-slate-600">
-              <p className="font-semibold text-brand-navy">{currentPlan.includedPromotionDays || 0} días de prioridad en búsquedas por activación</p>
-              <p className="mt-1">Solo se registra una promoción cuando se asigna a una oferta válida. Las activaciones restantes vencen con la suscripción.</p>
-            </div>
-            <button
-              type="button"
-              disabled={availableIncluded === 0}
-              onClick={() => beginPromotion("included", currentPlan.includedPromotionDays)}
-              className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-navy px-4 text-sm font-bold text-white transition hover:bg-brand-navy-light disabled:cursor-not-allowed disabled:bg-slate-300"
-            >
-              <Sparkles size={17} /> Elegir oferta y utilizar beneficio
-            </button>
-          </article>
-          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <SmallHeading icon={Megaphone} title="Comprar promoción adicional" description="Selecciona duración y oferta antes del pago; no se guardan promociones sin asignar." />
-            <div className="mt-5 grid grid-cols-3 gap-2">
-              {PROMOTION_CATALOG.map((rate) => (
-                <button
-                  key={rate.days}
-                  type="button"
-                  onClick={() => beginPromotion("extra", rate.days)}
-                  className="rounded-xl border border-slate-200 bg-[#f7f9fc] px-2 py-4 text-center transition hover:border-brand-navy hover:bg-[#edf1fb]"
-                >
-                  <span className="block text-base font-extrabold text-brand-navy">{rate.days} días</span>
-                  <span className="mt-1 block text-sm text-slate-600">{formatPrice(rate.price)} MXN</span>
-                </button>
-              ))}
-            </div>
-            <p className="mt-4 text-xs leading-5 text-slate-500">Las promociones adicionales son independientes del plan y no descuentan activaciones incluidas.</p>
-          </article>
+          <IncludedPromotionsActivation />
+          <StripeAdditionalPromotion />
         </section>
 
-        <div className="text-xs leading-5 text-slate-500">Las ofertas, cantidades y precios mostrados son ilustrativos. La contratación verificará vigencias, disponibilidad y pagos en el servidor.</div>
+        <div className="text-xs leading-5 text-slate-500">Los importes reales se consultan en SQLite. Las compras se pagan en Stripe y se confirman mediante su webhook firmado.</div>
       </div>
 
       <Modal

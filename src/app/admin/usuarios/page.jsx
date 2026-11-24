@@ -1,18 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Eye, GraduationCap, LockKeyhole, RotateCcw, Search, ShieldCheck, SlidersHorizontal } from "lucide-react";
+import { consultarAdministracion } from "@/components/admin/admin-api";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { TablePagination } from "@/components/table-pagination";
 import { UserDetailsModal, UserManagementModal } from "@/components/admin/user-management-modal";
-
-// Registros de ejemplo presentes en el proyecto inicial. No proceden de SQLite.
-// Las fechas, matrículas y otros atributos no disponibles no se inventan.
-const exampleUsers = [
-  { id: "alumno-1", name: "David Hernández", email: "david@comunidad.unam.mx", role: "estudiante", status: "activo", identifier: null, registeredAt: null, lastAccess: null },
-  { id: "alumno-2", name: "Andrea Moreno", email: "andrea@comunidad.unam.mx", role: "estudiante", status: "activo", identifier: null, registeredAt: null, lastAccess: null },
-  { id: "admin-1", name: "Administración", email: "admin@plataforma.example", role: "administrador", status: "activo", identifier: null, registeredAt: null, lastAccess: null },
-];
 
 const tabs = [
   { value: "todos", label: "Todos los usuarios" },
@@ -73,7 +66,7 @@ function UserActions({ user, onView, onManage }) {
       <button type="button" onClick={() => onView(user)} className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-[#f1f3fb] px-3 py-2 text-[12px] font-semibold text-brand-navy transition hover:bg-[#e6ebfb]">
         <Eye size={15} aria-hidden="true" /> Ver usuario
       </button>
-      <button type="button" onClick={() => onManage(user)} className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-brand-navy px-3 py-2 text-[12px] font-semibold text-white transition hover:bg-brand-navy-light">
+      <button type="button" disabled={user.own} onClick={() => onManage(user)} className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-brand-navy px-3 py-2 text-[12px] font-semibold text-white transition hover:bg-brand-navy-light">
         <LockKeyhole size={14} aria-hidden="true" /> Gestionar usuario
       </button>
     </div>
@@ -98,6 +91,9 @@ function MobileUser({ user, onView, onManage }) {
 }
 
 export default function AdminUsersPage() {
+  const [users,setUsers]=useState([]);
+  const [loadState,setLoadState]=useState("Cargando usuarios…");
+  useEffect(()=>{const controller=new AbortController();consultarAdministracion("usuarios",controller.signal).then(d=>{setUsers(d.usuarios);setLoadState("");}).catch(e=>{if(!controller.signal.aborted)setLoadState(e.message);});return ()=>controller.abort();},[]);
   const [role, setRole] = useState("todos");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
@@ -110,7 +106,7 @@ export default function AdminUsersPage() {
 
   const filteredUsers = useMemo(() => {
     const needle = normalize(query.trim());
-    const list = exampleUsers.filter((user) => {
+    const list = users.filter((user) => {
       const matchesRole = role === "todos" || user.role === role;
       const matchesStatus = !status || user.status === status;
       const matchesQuery = !needle || normalize([user.name, user.email, user.identifier, roleStyles[user.role].text].join(" ")).includes(needle);
@@ -119,7 +115,7 @@ export default function AdminUsersPage() {
     if (sortOrder === "nombre-asc") list.sort((a, b) => a.name.localeCompare(b.name, "es"));
     if (sortOrder === "nombre-desc") list.sort((a, b) => b.name.localeCompare(a.name, "es"));
     return list;
-  }, [query, role, status, sortOrder]);
+  }, [users, query, role, status, sortOrder]);
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -183,6 +179,7 @@ export default function AdminUsersPage() {
         )}
       </section>
 
+      {loadState && <p role="status" className="mb-4 rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-600">{loadState}</p>}
       <section aria-label="Listado de usuarios" className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_5px_24px_rgba(20,43,73,0.045)]">
         <div className="hidden overflow-x-auto lg:block">
           <table className="conectu-table w-full min-w-[940px] border-collapse text-left text-[12px]">
@@ -218,12 +215,12 @@ export default function AdminUsersPage() {
           page={safePage} pages={totalPages} onChange={setPage}
           total={filteredUsers.length} pageSize={pageSize}
           onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
-          label="usuarios de ejemplo"
+          label="usuarios"
         />
       </section>
 
       <UserDetailsModal user={detailsUser} onClose={() => setDetailsUser(null)} onManage={(user) => { setDetailsUser(null); setManagedUser(user); }} />
-      <UserManagementModal user={managedUser} onClose={() => setManagedUser(null)} />
+      <UserManagementModal user={managedUser} onClose={() => setManagedUser(null)} onSaved={(data)=>{setUsers(data.usuarios);setManagedUser(null);}} />
     </DashboardShell>
   );
 }

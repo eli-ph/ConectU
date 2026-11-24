@@ -18,6 +18,10 @@ import {
 } from "lucide-react";
 import { PublicFooter } from "@/components/public-footer";
 import { PublicHeader } from "@/components/public-header";
+import { obtenerCatalogoEjesAccion } from "@/server/services/catalogos.service";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const stats = [
   {
@@ -113,6 +117,7 @@ const audiences = [
 ];
 
 export default function HomePage() {
+  const ejesAccion = obtenerCatalogoEjesAccion();
   return (
     <>
       <PublicHeader />
@@ -170,11 +175,7 @@ export default function HomePage() {
                   </span>
                   <select name="axis" defaultValue="" className="ui-control select-chevron h-12 min-w-0 pr-10 text-sm">
                     <option value="">Todos los ejes</option>
-                    <option value="Ciencia y tecnología">Ciencia y tecnología</option>
-                    <option value="Industria y energía">Industria y energía</option>
-                    <option value="Salud y biotecnología">Salud y biotecnología</option>
-                    <option value="Educación e impacto social">Educación e impacto social</option>
-                    <option value="Sustentabilidad y movilidad">Sustentabilidad y movilidad</option>
+                    {ejesAccion.map((eje) => <option key={eje} value={eje}>{eje}</option>)}
                   </select>
                 </label>
                 <button

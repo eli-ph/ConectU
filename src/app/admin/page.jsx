@@ -13,11 +13,13 @@ import {
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { PendingCompaniesPreview } from "@/components/admin/pending-companies-preview";
+import { exigirRol } from "@/server/auth/session";
+import { resumenAdmin } from "@/server/services/administracion.service";
+import { empresasParaAdmin } from "@/server/services/empresas.service";
 
 export const metadata = { title: "Resumen administrativo" };
 
-// Estructura visual preparada para recibir los indicadores del servicio administrativo.
-// No sustituir los guiones por números inventados.
+// Indicadores reales del servicio administrativo.
 const metrics = [
   { label: "Empresas pendientes", detail: "En espera de revisión", icon: Clock3 },
   { label: "Empresas aprobadas", detail: "Con registro autorizado", icon: BadgeCheck },
@@ -28,17 +30,21 @@ const metrics = [
   { label: "Estudiantes registrados", detail: "Cuentas estudiantiles", icon: GraduationCap },
 ];
 
-const pendingCompanyPreview = [
-  {
-    name: "Empresa demostrativa",
-    initial: "ED",
-    sector: "Tecnología",
-    location: "Ciudad de México",
-    state: "Pendiente",
-  },
-];
-
-export default function AdminDashboard() {
+export default async function AdminDashboard() {
+  const admin = await exigirRol("admin");
+  const values = resumenAdmin(admin);
+  const pendingCompanyPreview = empresasParaAdmin(admin)
+    .filter((company) => company.estado_verificacion === "pendiente")
+    .slice(0, 5)
+    .map((company) => ({
+      id: company.id,
+      name: company.nombre_comercial,
+      initial: company.nombre_comercial.split(/\s+/).slice(0, 2).map((w) => w[0] || "").join("").toUpperCase(),
+      sector: company.sector || "Sin especificar",
+      rfc: company.rfc,
+      fecha: company.fecha_solicitud,
+      state: "Pendiente",
+    }));
   return (
     <DashboardShell
       role="admin"
@@ -77,7 +83,7 @@ export default function AdminDashboard() {
             <span className="text-xs font-medium text-slate-500">Resumen de la plataforma</span>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7">
-            {metrics.map((metric) => <AdminMetric key={metric.label} {...metric} />)}
+            {metrics.map((metric, i) => <AdminMetric key={metric.label} {...metric} value={values[["empresasPendientes","empresasAprobadas","empresasRegistradas","planesActivos","ofertasActivas","estudiantesActivos","estudiantesRegistrados"][i]]} />)}
           </div>
         </section>
 
@@ -102,7 +108,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="border-b border-slate-100 bg-[#f7f8fc] px-5 py-3 text-xs text-slate-500 sm:px-7">
-            Ejemplo de la estructura del listado
+            Solicitudes reales registradas en SQLite · Gestionar decisiones en el directorio empresarial
           </div>
 
           <PendingCompaniesPreview companies={pendingCompanyPreview} />
@@ -118,14 +124,14 @@ export default function AdminDashboard() {
   );
 }
 
-function AdminMetric({ label, detail, icon: Icon }) {
+function AdminMetric({ label, detail, icon: Icon, value }) {
   return (
     <article className="relative min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 py-5 shadow-soft transition-shadow hover:shadow-card">
       <div className="flex min-h-10 items-start justify-between gap-2">
         <h3 className="text-xs font-bold leading-5 text-slate-600">{label}</h3>
         <Icon size={18} className="shrink-0 text-brand-navy" aria-hidden="true" />
       </div>
-      <p className="mt-2 text-3xl font-extrabold tracking-tight text-brand-navy" aria-label={`${label}: pendiente de datos`}>—</p>
+      <p className="mt-2 text-3xl font-extrabold tracking-tight text-brand-navy" aria-label={`${label}: ${value}`}>{value}</p>
       <p className="mt-2 min-h-9 text-xs leading-[1.4] text-slate-500">{detail}</p>
     </article>
   );

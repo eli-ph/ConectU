@@ -1,24 +1,35 @@
 import Link from "next/link";
-import { CalendarDays, Clock3, Eye, FileText, MapPin, Pencil } from "lucide-react";
+import { CalendarDays, FileText, MapPin, Pencil, Users } from "lucide-react";
+import { candidaturasOferta } from "@/server/services/postulaciones.service";
+import { estadoPostulacion } from "@/lib/application-status";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { DemoNotice, EmptyMetric, Panel, primaryButton, ResponsiveTable, secondaryButton, Status } from "@/components/dashboard-ui";
-
-export const metadata = { title: "Gestión de oferta" };
-export function generateStaticParams() { return [{ id: "trainee-software" }, { id: "analisis-datos" }, { id: "automatizacion" }, { id: "frontend" }]; }
-
-export default async function OfferManagementPage({ params }) {
-  const { id } = await params;
-  return <DashboardShell role="empresa" title="Ingeniería trainee de software" eyebrow="Gestión de oferta">
-    <DemoNotice />
-    <section className="rounded-xl border border-slate-200 bg-white p-5"><div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between"><div><div className="flex flex-wrap gap-2"><Status tone="green">Activa</Status><Status tone="navy">Empleo</Status><Status>Híbrida</Status></div><h2 className="mt-4 text-xl font-bold text-brand-navy">Ingeniería trainee de software</h2><div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500"><span className="inline-flex items-center gap-1.5"><MapPin size={15} />Ciudad de México</span><span className="inline-flex items-center gap-1.5"><CalendarDays size={15} />Cierre: 30 nov 2026</span><span className="inline-flex items-center gap-1.5"><Clock3 size={15} />Ciclo 2</span></div></div><div className="flex flex-wrap gap-2"><Link href={`/empresa/ofertas/${id}/editar`} className={secondaryButton}><Pencil size={16} />Editar</Link><button className={primaryButton}>Extender vigencia</button></div></div></section>
-    <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><EmptyMetric label="Postulaciones" value="8" detail="Ciclo actual" /><EmptyMetric label="En revisión" value="4" /><EmptyMetric label="Aceptadas" value="2" /><EmptyMetric label="Plazas" value="2 / 4" detail="Cubiertas" /></div>
-    <Panel className="mt-6" title="Candidaturas del ciclo actual" description="Cada candidatura consulta el único CV vigente del estudiante."><ResponsiveTable headings={["Estudiante", "Programa académico", "Fecha", "Estado", "Acción"]}>{[
-      ["David Hernández", "Programa académico demostrativo", "12 oct 2026", "En revisión", "amber"],
-      ["Andrea Moreno", "Programa académico demostrativo", "11 oct 2026", "Enviada", "blue"],
-      ["Luis Torres", "Programa académico demostrativo", "10 oct 2026", "Aceptada", "green"],
-    ].map(([name, program, date, status, tone], index) => <tr key={name} className="border-b border-slate-100 last:border-0"><td className="px-4 py-4 font-semibold text-slate-800">{name}</td><td className="px-4 py-4 text-slate-600">{program}</td><td className="px-4 py-4 text-slate-500">{date}</td><td className="px-4 py-4"><Status tone={tone}>{status}</Status></td><td className="px-4 py-4 text-right"><Link href={`/empresa/postulaciones/candidato-${index + 1}`} className="inline-flex items-center gap-1.5 font-semibold text-brand-navy"><Eye size={15} />Ver perfil</Link></td></tr>)}</ResponsiveTable></Panel>
-    <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_0.65fr]"><Panel title="Historial de ciclos"><div className="divide-y divide-slate-100"><Cycle title="Ciclo 2 · actual" date="1 oct — 30 nov 2026" applications="8 postulaciones" active /><Cycle title="Ciclo 1 · cerrado" date="15 jul — 15 sep 2026" applications="12 postulaciones" /></div></Panel><Panel title="Documentos de la oferta"><div className="space-y-3 p-5"><Document name="Descripción_técnica.pdf" /><Document name="Información_del_programa.pdf" /></div></Panel></div>
+import { Panel, Status } from "@/components/dashboard-ui";
+import { exigirRol } from "@/server/auth/session";
+import { detalleOfertaEmpresa } from "@/server/services/ofertas.service";
+import { notFound } from "next/navigation";
+import { OFFER_TYPE_LABELS } from "@/lib/offer-types";
+export const runtime="nodejs";
+export const dynamic="force-dynamic";
+export const metadata={title:"Detalle de oferta | ConectU"};
+export default async function OfertaGestionPage({params}){
+  const usuario=await exigirRol('empresa');
+  let oferta, candidatos;try{const id=(await params).id;oferta=detalleOfertaEmpresa(usuario,id);candidatos=candidaturasOferta(usuario,id).candidatos;}catch(e){if(e.status===404||e.status===400)notFound();throw e;}
+  return <DashboardShell role="empresa" title="Gestión de oferta" eyebrow="Mis ofertas">
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+      <div className="flex flex-wrap justify-between gap-4">
+        <div><div className="flex flex-wrap gap-2"><Status tone={oferta.estado==='publicada'?'green':'slate'}>{oferta.estado==='publicada'?'Publicada':oferta.estado==='borrador'?'Borrador':'Cerrada'}</Status><Status tone="navy">{OFFER_TYPE_LABELS[oferta.tipo]||oferta.tipo}</Status></div>
+          <h1 className="mt-3 text-xl font-bold text-brand-navy">{oferta.titulo}</h1>
+          <div className="mt-3 flex flex-wrap gap-4 text-sm text-slate-500"><span className="inline-flex items-center gap-1"><MapPin size={15}/>{oferta.ciudad}</span><span className="inline-flex items-center gap-1"><CalendarDays size={15}/>Vence: {oferta.fecha_vencimiento||'Sin definir'}</span><span>{oferta.plazas} plazas</span></div>
+        </div>
+        {oferta.estado!=='cerrada' && <Link href={`/empresa/ofertas/${oferta.id}/editar`} className="inline-flex items-center gap-2 self-start rounded-xl bg-brand-navy px-4 py-2.5 text-sm font-semibold text-white"><Pencil size={15}/>Editar oferta</Link>}
+      </div>
+      <p className="mt-5 whitespace-pre-line text-sm leading-7 text-slate-700">{oferta.descripcion}</p>
+      {!!oferta.habilidades.length&&<div className="mt-4 flex flex-wrap gap-2">{oferta.habilidades.map(h=><span key={h} className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-brand-navy">{h}</span>)}</div>}
+    </section>
+    <div className="mt-5 grid gap-5 lg:grid-cols-2">
+      <Panel title={`Postulaciones (${candidatos.length})`} description="Candidatos que se postularon a esta oferta."><div className="divide-y divide-slate-100">{candidatos.length?candidatos.map(c=><div key={c.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"><div><p className="font-semibold text-brand-navy">{c.nombre} {c.apellidos}</p><p className="mt-1 text-xs text-slate-500">{c.carrera||'Carrera sin registrar'} · {c.postulada_at}</p><Status tone={estadoPostulacion(c.estado).tone}>{estadoPostulacion(c.estado).label}</Status></div><Link href={`/empresa/postulaciones/${c.id}`} className="rounded-lg bg-brand-navy px-3 py-2 text-xs font-semibold text-white">Ver candidato</Link></div>):<p className="p-5 text-sm text-slate-500">Todavía no hay postulaciones para esta oferta.</p>}</div></Panel>
+      <Panel title="Documentos de la oferta"><div className="space-y-2 p-5">{oferta.adjuntos.length?oferta.adjuntos.map(doc=><a key={doc.id} target="_blank" rel="noreferrer" href={`/api/empresa/ofertas/${oferta.id}/archivos/${doc.id}`} className="flex items-center gap-2 rounded-lg border border-slate-200 p-3 text-sm text-brand-navy hover:bg-slate-50"><FileText size={17}/>{doc.nombre_original}</a>):<p className="text-sm text-slate-500">No hay documentos adjuntos.</p>}</div></Panel>
+    </div>
+    <Link href="/empresa/ofertas" className="mt-5 inline-block text-sm font-semibold text-brand-navy hover:underline">Volver a Mis ofertas</Link>
   </DashboardShell>;
 }
-function Cycle({ title, date, applications, active }) { return <div className="flex items-center justify-between gap-4 p-5"><div><p className="font-semibold text-slate-800">{title}</p><p className="mt-1 text-xs text-slate-500">{date} · {applications}</p></div><Status tone={active ? "green" : "slate"}>{active ? "En curso" : "Finalizado"}</Status></div>; }
-function Document({ name }) { return <button className="flex w-full items-center gap-3 rounded-lg border border-slate-200 p-3 text-left"><FileText size={18} className="text-brand-gold" /><span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-700">{name}</span><span className="text-xs font-semibold text-brand-navy">Ver</span></button>; }

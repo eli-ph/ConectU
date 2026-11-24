@@ -6,11 +6,13 @@ import { checkPassword } from "@/lib/password-policy";
 import { PasswordStrength } from "@/components/password-strength";
 
 /** Solo controla la interfaz. El envío real se conectará al servidor. */
-export function AuthForm({ children, className = "", actionLabel = "este formulario" }) {
+export function AuthForm({ children, className = "", actionLabel = "este formulario", submitAction }) {
   const [feedback, setFeedback] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+    if (submitting) return;
     const values = new FormData(event.currentTarget);
     if (values.has("confirm_password") && !checkPassword(String(values.get("password") || "")).valid) {
       setFeedback("La contraseña debe cumplir los cinco requisitos de seguridad.");
@@ -20,17 +22,39 @@ export function AuthForm({ children, className = "", actionLabel = "este formula
       setFeedback("Las contraseñas no coinciden. Revisa ambos campos.");
       return;
     }
-    setFeedback(`La acción «${actionLabel}» estará disponible cuando conectemos la autenticación con el servidor.`);
+    if (!submitAction) {
+      setFeedback(`La acción «${actionLabel}» estará disponible cuando conectemos la autenticación con el servidor.`);
+      return;
+    }
+    setFeedback("");
+    setSubmitting(true);
+    try {
+      const result = await submitAction(values);
+      if (!result.ok) {
+        setFeedback(result.message || "No fue posible completar la operación.");
+      } else if (result.redirect) {
+        window.location.assign(result.redirect);
+      } else {
+        setFeedback(result.message || "Operación completada.");
+      }
+    } catch {
+      setFeedback("No se pudo contactar al servidor. Intenta nuevamente.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
-    <form onSubmit={handleSubmit} className={className}>
-      {children}
+    <form onSubmit={handleSubmit} aria-busy={submitting} className="auth-form">
+      <fieldset disabled={submitting} className={`${className} min-w-0 border-0 p-0 m-0`}>
+        {children}
+      </fieldset>
       {feedback && (
         <p role="status" aria-live="polite" className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
           {feedback}
         </p>
       )}
+      {submitting && <p role="status" className="mt-2 text-sm text-slate-500">Procesando solicitud...</p>}
     </form>
   );
 }

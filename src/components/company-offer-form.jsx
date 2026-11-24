@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { OFFER_TYPE_LABELS } from "@/lib/offer-types";
 import Link from "next/link";
 import { SkillPicker } from "@/components/skill-picker";
@@ -14,13 +15,13 @@ const offerTypes = [
     icon: GraduationCap,
   },
   {
-    id: "internships",
-    title: OFFER_TYPE_LABELS.internships,
+    id: "internship",
+    title: OFFER_TYPE_LABELS.internship,
     subtitle: "Programa formativo",
     icon: Sparkles,
   },
   {
-    id: "servicio",
+    id: "servicio_social",
     title: OFFER_TYPE_LABELS.servicio_social,
     subtitle: "Horas oficiales",
     icon: Award,
@@ -35,90 +36,99 @@ const offerTypes = [
 
 const modalities = ["Presencial", "Híbrido", "100% Remoto"];
 
-const initialAttachments = [
-  {
-    id: "doc-1",
-    name: "Bases_Tecnicas_Convocatoria.pdf",
-    meta: "1.4 MB • PDF Oficial",
-    verified: true,
-  },
-  {
-    id: "doc-2",
-    name: "Rubrica_Evaluacion_Proyectos.pdf",
-    meta: "850 KB • Criterios Técnicos",
-    verified: true,
-  },
-];
+const defaultDeadline = () => {
+  const date=new Date();date.setDate(date.getDate()+30);
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+};
 
-export function CompanyOfferForm() {
-  const [title, setTitle] = useState(
-    "Ingeniero de Sistemas Embebidos e IoT"
-  );
-  const [selectedType, setSelectedType] = useState("empleo");
-  const [modality, setModality] = useState("Presencial");
-  const [location, setLocation] = useState(
-    "Parque Tecnológico Querétaro, Edificio Alfa - Lab de Hardware 03"
-  );
-  const [description, setDescription] = useState(
-    `El candidato se integrará a la célula de telemetría automotriz asistiendo en el desarrollo de firmware bare-metal y RTOS para módulos de monitoreo en tiempo real.\n\nPrincipales entregables durante el periodo:\n- Prototipado e integración de controladores SPI/I2C en microcontroladores ARM Cortex-M4.\n- Implementación del stack de comunicaciones MQTT sobre Ethernet industrial y Wi-Fi embebido.\n- Validación en banco de pruebas con osciloscopio digital y analizadores lógicos de protocolos.`
-  );
-
-  const [axis, setAxis] = useState(
-    "Tecnologías de la Información y Software"
-  );
-  const [skills, setSkills] = useState([
-    "C/C++ Moderno (C11/C+17)",
-    "FreeRTOS",
-    "Linux Embedded / Yocto",
-    "KiCad EDA",
-    "Protocolo MQTT & TLS",
-  ]);
-
-  const [minCredits, setMinCredits] = useState(70);
-
-  const [stipend, setStipend] = useState("12,500.00");
-  const [vacancies, setVacancies] = useState(3);
-  const [deadline, setDeadline] = useState("2025-05-30");
-  const [socialHours, setSocialHours] = useState("480 horas");
-  const [officialKey, setOfficialKey] = useState("");
-
-  const [attachments, setAttachments] = useState(initialAttachments);
+export function CompanyOfferForm({ editing = false, availableSkills = [], availableAxes = [], initialOffer = null, capacity = null }) {
+  const router=useRouter();
+  const [title, setTitle] = useState(initialOffer?.titulo || "");
+  const [selectedType, setSelectedType] = useState(initialOffer?.tipo || "empleo");
+  const MODALITY_DB={Presencial:'presencial','Híbrido':'hibrida','100% Remoto':'remota'};
+  const [modality, setModality] = useState(Object.keys(MODALITY_DB).find(k=>MODALITY_DB[k]===initialOffer?.modalidad)||'Presencial');
+  const [location, setLocation] = useState(initialOffer?.ciudad || "");
+  const [description, setDescription] = useState(initialOffer?.descripcion || "");
+  const [axis, setAxis] = useState(initialOffer?.eje_nombre || availableAxes[0] || "");
+  const [skills, setSkills] = useState(initialOffer?.habilidades || []);
+  const [minCredits, setMinCredits] = useState(initialOffer?.creditos_minimos ?? 0);
+  const [stipend, setStipend] = useState(initialOffer?.compensacion || "0");
+  const [vacancies, setVacancies] = useState(initialOffer?.plazas ?? 1);
+  const [deadline, setDeadline] = useState(initialOffer?.fecha_vencimiento || defaultDeadline());
+  const [socialHours, setSocialHours] = useState(initialOffer?.horas_requeridas || "");
+  const [officialKey, setOfficialKey] = useState(initialOffer?.clave_programa || "");
+  const [attachments, setAttachments] = useState((initialOffer?.adjuntos || []).map(a=>({id:a.id,name:a.nombre_original,
+    meta:`${(a.tamano_bytes/1048576).toFixed(1)} MB · PDF`,uploaded:true})));
   const [statusMessage, setStatusMessage] = useState("");
-
-  const handleRemoveSkill = (tag) => {
-    setSkills((prev) => prev.filter((item) => item !== tag));
+  const [isError, setIsError] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const isClosed=initialOffer?.estado==='cerrada';
+  const handleRemoveAttachment = async (id) => {
+    const target=attachments.find(a=>a.id===id);
+    if(target?.uploaded && initialOffer?.id){
+      if(!window.confirm('¿Eliminar este documento de la oferta?'))return;
+      const response=await fetch(`/api/empresa/ofertas/${initialOffer.id}/archivos/${id}`,{method:'DELETE'});
+      if(!response.ok){setIsError(true);setStatusMessage('No fue posible eliminar el documento.');return;}
+    }
+    setAttachments(prev=>prev.filter(a=>a.id!==id));
   };
-
-  const handleRemoveAttachment = (id) => {
-    setAttachments((prev) => prev.filter((doc) => doc.id !== id));
+  const handleAddAttachment = e => {
+    const file=e.target.files?.[0];e.target.value='';
+    if(!file)return;
+    if(attachments.length>=3||file.size>15*1024*1024||!file.name.toLowerCase().endsWith('.pdf')){
+      setIsError(true);setStatusMessage('Puedes adjuntar hasta 3 PDF de máximo 15 MB cada uno.');return;
+    }
+    setAttachments(prev=>[...prev,{id:crypto.randomUUID(),name:file.name,meta:`${(file.size/1048576).toFixed(1)} MB · Sin subir`,file}]);
   };
-
-  const handleAddMockAttachment = (e) => {
-    const file = e.target.files?.[0];
-    if (!file || attachments.length >= 3) return;
-    const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
-    setAttachments((prev) => [
-      ...prev,
-      {
-        id: `doc-${Date.now()}`,
-        name: file.name,
-        meta: `${sizeMb} MB • Anexo Técnico`,
-        verified: true,
-      },
-    ]);
-    e.target.value = "";
+  const save = async (action) => {
+    if(saving)return;
+    setSaving(true);setStatusMessage('');setIsError(false);
+    try{
+      const payload={action,title,type:selectedType,modality:MODALITY_DB[modality],location,description,
+        axis,skills,minCredits,stipend,vacancies,deadline,socialHours,officialKey};
+      const endpoint=initialOffer?.id?`/api/empresa/ofertas/${initialOffer.id}`:'/api/empresa/ofertas';
+      const result=await fetch(endpoint,{method:initialOffer?.id?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      const data=await result.json();if(!result.ok||!data.ok)throw new Error(data.message||'No pudimos guardar la oferta.');
+      const pending=attachments.filter(a=>a.file);
+      for(const doc of pending){
+        const form=new FormData();form.set('archivo',doc.file);
+        const upload=await fetch(`/api/empresa/ofertas/${data.id}/archivos`,{method:'POST',body:form});
+        const out=await upload.json();
+        if(!upload.ok||!out.ok){
+          setIsError(true);setStatusMessage(`La oferta se guardó, pero no se pudo subir «${doc.name}». Puedes volver a editarla para completar los documentos.`);
+          router.replace(`/empresa/ofertas/${data.id}/editar`);router.refresh();return;
+        }
+      }
+      router.push(`/empresa/ofertas?guardada=${action==='publish'?'publicada':'1'}`);
+      router.refresh();
+    }catch(e){setIsError(true);setStatusMessage(e.message||'No pudimos guardar la oferta.');}
+    finally{setSaving(false);}
   };
-
-  const handleSaveDraft = () => {
-    setStatusMessage("Borrador guardado y respaldado localmente hace unos segundos.");
+  const handleDeleteOffer = async () => {
+    if (!initialOffer?.id || saving) return;
+    if (!window.confirm(`¿Eliminar la oferta «${initialOffer.titulo || title}»? Dejará de mostrarse y se conservará su historial de postulaciones.`)) return;
+    setSaving(true);
+    setIsError(false);
+    setStatusMessage("");
+    try {
+      const response = await fetch(`/api/empresa/ofertas/${initialOffer.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "eliminar" }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) throw new Error(result.message || "No pudimos eliminar la oferta.");
+      router.replace("/empresa/ofertas?eliminada=1");
+      router.refresh();
+    } catch (error) {
+      setIsError(true);
+      setStatusMessage(error.message || "No pudimos eliminar la oferta.");
+    } finally {
+      setSaving(false);
+    }
   };
-
-  const handlePublish = (e) => {
-    e.preventDefault();
-    setStatusMessage(
-      `Convocatoria "${title}" publicada correctamente (1 cupo asignado).`
-    );
-  };
+  const handleSaveDraft=()=>save(initialOffer?.estado==='publicada'?'save':'draft');
+  const handlePublish=(e)=>{e.preventDefault();save('publish');};
 
   return (
     <form onSubmit={handlePublish} className="space-y-5 pb-8">
@@ -129,7 +139,7 @@ export function CompanyOfferForm() {
             MIS OFERTAS
           </Link>
           <ChevronRight size={12} />
-          <span className="text-brand-navy">NUEVA CONVOCATORIA</span>
+          <span className="text-brand-navy">{editing ? "EDITAR CONVOCATORIA" : "NUEVA CONVOCATORIA"}</span>
         </nav>
 
         <div className="mt-1.5 flex flex-wrap items-center gap-3">
@@ -138,7 +148,7 @@ export function CompanyOfferForm() {
           </h1>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-gold-soft px-3 py-1 text-[11px] font-bold text-[#8b6600]">
             <span className="h-1.5 w-1.5 rounded-full bg-[#c99700]" />
-            Versión 2025.1 - Modo Borrador
+            {initialOffer?.estado === "publicada" ? "Publicada" : "Borrador"}
           </span>
         </div>
       </div>
@@ -155,22 +165,21 @@ export function CompanyOfferForm() {
                 Capacidad de Cuenta
               </h2>
               <span className="rounded-md bg-[#eeefff] px-2 py-0.5 text-[10px] font-bold text-indigo-700">
-                Plan Corporativo
+                {capacity?.plan || "Plan empresarial"}
               </span>
             </div>
             <p className="mt-0.5 text-xs text-slate-500">
-              Consumirá{" "}
+              Una oferta publicada consume{" "}
               <strong className="font-bold text-brand-navy">
                 1 cupo de oferta activa
               </strong>{" "}
-              • Sin límite en número de plazas
+              • Cada oferta puede tener varias plazas
             </p>
           </div>
         </div>
 
         <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-[#f5c22b]/50 bg-[#fffdf4] px-3.5 py-1.5 text-xs font-bold text-[#8b6600]">
-          <span className="h-2 w-2 rounded-full bg-[#e6b31e]" />7 cupos
-          disponibles actualmente
+          <span className="h-2 w-2 rounded-full bg-[#e6b31e]" />{capacity?.limite==null ? "Sin límite de ofertas" : `${Math.max(0,capacity.limite-capacity.activas)} cupos disponibles`}
         </span>
       </section>
 
@@ -210,8 +219,7 @@ export function CompanyOfferForm() {
               className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 outline-none transition focus:border-brand-navy"
             />
             <p className="mt-1 text-[11px] text-slate-400">
-              Recomendamos nombres técnicos descriptivos validados por academias
-              universitarias.
+              Utiliza un título claro y descriptivo para que los estudiantes encuentren tu oferta.
             </p>
           </div>
 
@@ -345,7 +353,7 @@ export function CompanyOfferForm() {
 
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">
             <Cpu size={12} />
-            Match IA Activo
+            Criterios de perfil
           </span>
         </div>
 
@@ -360,6 +368,9 @@ export function CompanyOfferForm() {
               onChange={(e) => setAxis(e.target.value)}
               className="select-chevron w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-medium text-slate-800 outline-none transition focus:border-brand-navy sm:text-sm"
             >
+              {availableAxes.map((name)=><option key={name} value={name}>{name}</option>)}
+              {/* El catálogo de ejes se consulta desde SQLite; no se usan opciones fijas. */}
+              {/*
               <option value="Tecnologías de la Información y Software">
                 Tecnologías de la Información y Software
               </option>
@@ -371,14 +382,14 @@ export function CompanyOfferForm() {
               </option>
               <option value="Manufactura Avanzada y Procesos">
                 Manufactura Avanzada y Procesos
-              </option>
+              </option> */}
             </select>
           </div>
 
           {/* Selector compartido con el catálogo: búsqueda arriba y etiquetas debajo. */}
           <div>
             <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-600">HERRAMIENTAS Y TECNOLOGÍAS REQUERIDAS</h3>
-            <SkillPicker skills={skills} onChange={setSkills} label="Busca las tecnologías que requiere esta oferta" />
+            <SkillPicker skills={skills} onChange={setSkills} suggestions={availableSkills} allowCustom={false} label="Busca las tecnologías que requiere esta oferta" />
           </div>
 
           {/* Créditos mínimos requeridos */}
@@ -412,7 +423,7 @@ export function CompanyOfferForm() {
               3. Esquema de Compensación y Servicio Social
             </h2>
             <p className="text-xs text-slate-500">
-              Estructura de apoyo económico y acreditación institucional.
+              Indica el apoyo económico y, cuando corresponda, los requisitos del programa.
             </p>
           </div>
         </div>
@@ -438,7 +449,7 @@ export function CompanyOfferForm() {
             </div>
             <p className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700">
               <CheckCircle2 size={13} className="shrink-0 text-emerald-600" />
-              Beca neta mensual exenta de retenciones académicas
+              Importe informativo indicado por la empresa
             </p>
           </div>
 
@@ -469,7 +480,7 @@ export function CompanyOfferForm() {
               </button>
             </div>
             <p className="mt-1.5 text-[11px] text-slate-400">
-              Vacantes concurrentes autorizadas para este ciclo.
+              Plazas disponibles en esta oferta.
             </p>
           </div>
         </div>
@@ -496,7 +507,7 @@ export function CompanyOfferForm() {
         </div>
 
         {/* Datos aplicables solo a prácticas y servicio social. */}
-        {(selectedType === "practicas" || selectedType === "servicio") && <div className="mt-6 rounded-2xl border border-indigo-100 bg-[#f7f8ff] p-4 sm:p-5">
+        {(selectedType === "practicas" || selectedType === "servicio_social") && <div className="mt-6 rounded-2xl border border-indigo-100 bg-[#f7f8ff] p-4 sm:p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <ShieldCheck size={16} className="text-indigo-700" />
@@ -594,14 +605,13 @@ export function CompanyOfferForm() {
               <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-2.5 text-[11px]">
                 <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
                   <CheckCircle2 size={12} className="text-emerald-600" />
-                  Verificado
+                  {doc.uploaded ? "Guardado" : "Por subir"}
                 </span>
-                <button
-                  type="button"
+                {doc.uploaded && initialOffer?.id && <a
+                  href={`/api/empresa/ofertas/${initialOffer.id}/archivos/${doc.id}`}
+                  target="_blank" rel="noreferrer"
                   className="font-bold text-indigo-700 hover:underline"
-                >
-                  Previsualizar
-                </button>
+                >Ver PDF</a>}
               </div>
             </div>
           ))}
@@ -610,16 +620,16 @@ export function CompanyOfferForm() {
             <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/50 p-4 text-center transition hover:border-brand-navy hover:bg-slate-50">
               <UploadCloud size={20} className="text-slate-400" />
               <p className="mt-2 text-xs font-bold text-brand-navy">
-                Cargar {attachments.length + 1}er Anexo Técnico
+                Adjuntar PDF ({attachments.length + 1} de 3)
               </p>
               <p className="mt-0.5 text-[11px] text-slate-400">
-                Arrastra tu PDF aquí o examina
+                Selecciona un documento PDF
               </p>
               <p className="mt-0.5 text-[10px] text-slate-400">Hasta 15 MB</p>
               <input
                 type="file"
                 accept="application/pdf"
-                onChange={handleAddMockAttachment}
+                onChange={handleAddAttachment}
                 className="sr-only"
               />
             </label>
@@ -628,7 +638,7 @@ export function CompanyOfferForm() {
       </section>
 
       {statusMessage && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-800">
+        <div role="status" className={`rounded-xl border px-4 py-3 text-xs font-semibold ${isError ? "border-rose-200 bg-rose-50 text-rose-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>
           {statusMessage}
         </div>
       )}
@@ -637,7 +647,7 @@ export function CompanyOfferForm() {
       <section className="flex flex-col items-center justify-between gap-3 rounded-2xl border border-slate-200/90 bg-white px-5 py-3.5 shadow-xs sm:flex-row">
         <p className="flex items-center gap-2 text-xs text-slate-500">
           <span className="h-2 w-2 rounded-full bg-[#e6b31e]" />
-          Borrador respaldado localmente hace 2 minutos
+          Los cambios se guardan en ConectU al seleccionar una acción.
         </p>
 
         <div className="flex flex-wrap items-center gap-2.5">
@@ -648,22 +658,36 @@ export function CompanyOfferForm() {
             Cancelar
           </Link>
 
+          {editing && initialOffer?.id && (
+            <button
+              type="button"
+              onClick={handleDeleteOffer}
+              disabled={saving}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-white px-4 py-2 text-xs font-bold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Trash2 size={14} />
+              Eliminar oferta
+            </button>
+          )}
+
           <button
             type="button"
             onClick={handleSaveDraft}
+            disabled={saving || isClosed}
             className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-brand-navy transition hover:bg-slate-50"
           >
             <Save size={14} />
-            Guardar Borrador
+            {saving ? "Guardando..." : editing ? "Guardar cambios" : "Guardar borrador"}
           </button>
 
-          <button
+          {initialOffer?.estado !== "publicada" && <button
             type="submit"
+            disabled={saving || isClosed}
             className="inline-flex items-center gap-1.5 rounded-xl bg-brand-navy px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-brand-navy/90"
           >
-            Publicar oferta
+            {saving ? "Guardando..." : initialOffer?.estado === "publicada" ? "Guardar cambios" : "Publicar oferta"}
             <ArrowRight size={14} />
-          </button>
+          </button>}
         </div>
       </section>
     </form>

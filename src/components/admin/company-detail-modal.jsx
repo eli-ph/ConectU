@@ -1,6 +1,7 @@
 "use client";
 
 import { Building2, ContactRound, FileText, MapPin, ShieldCheck } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Modal } from "@/components/dashboard-ui";
 
 const states = {
@@ -45,8 +46,25 @@ function Section({ icon: Icon, title, description, children }) {
 
 // Modal exclusivo de Gestión de empresas. El dashboard conserva
 // CompanyExpedientModal y su propio flujo de revisión.
-export function CompanyDetailModal({ company, onClose }) {
+export function CompanyDetailModal({ company, onClose, onDecide }) {
   const status = company?.state;
+  const [action, setAction] = useState("");
+  const [motivo, setMotivo] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  useEffect(() => { setAction(""); setMotivo(""); setError(""); }, [company?.id]);
+
+  async function confirmar(estado) {
+    if (!company || saving || !onDecide) return;
+    setError("");
+    setSaving(true);
+    try {
+      await onDecide(company, estado, motivo);
+      setAction("");
+      setMotivo("");
+    } catch (err) { setError(err.message || "No se pudo realizar la operación."); }
+    finally { setSaving(false); }
+  }
   return (
     <Modal
       open={Boolean(company)}
@@ -55,16 +73,42 @@ export function CompanyDetailModal({ company, onClose }) {
       description="Consulta los datos del registro empresarial"
       size="xl"
       footer={
-        <button
-          type="button"
-          onClick={onClose}
-          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-navy px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-navy-light"
-        >
-          Cerrar
-        </button>
+        <div className="flex w-full flex-wrap items-center justify-end gap-2">
+          {onDecide && status === "Pendiente" && (
+            <button disabled={saving} type="button" onClick={() => confirmar("aprobada")}
+              className="min-h-11 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Aprobar</button>
+          )}
+          {onDecide && ["Pendiente", "Aprobada"].includes(status) && (
+            <button disabled={saving} type="button" onClick={() => { setAction(status === "Pendiente" ? "rechazada" : "suspendida"); setMotivo(""); }}
+              className="min-h-11 rounded-xl border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-700 disabled:opacity-50">
+              {status === "Pendiente" ? "Rechazar" : "Suspender"}
+            </button>
+          )}
+          {onDecide && ["Rechazada", "Suspendida"].includes(status) && (
+            <button disabled={saving} type="button" onClick={() => confirmar("pendiente")}
+              className="min-h-11 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-brand-navy disabled:opacity-50">Enviar a revisión</button>
+          )}
+          <button type="button" onClick={onClose} disabled={saving}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-navy px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-navy-light disabled:opacity-50">Cerrar</button>
+        </div>
       }
     >
       <div className="space-y-5 sm:space-y-6">
+        {action && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <label className="block text-sm font-semibold text-brand-navy">Motivo de {action === "rechazada" ? "rechazo" : "suspensión"} (obligatorio)</label>
+            <textarea rows={3} maxLength={500} value={motivo} onChange={(event) => setMotivo(event.target.value)}
+              className="ui-control mt-2 w-full" placeholder="Explica el motivo de la decisión administrativa" />
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button type="button" disabled={saving || motivo.trim().length < 10} onClick={() => confirmar(action)}
+                className="min-h-10 rounded-lg bg-brand-navy px-4 text-sm font-semibold text-white disabled:opacity-40">Confirmar decisión</button>
+              <button type="button" disabled={saving} onClick={() => { setAction(""); setMotivo(""); }}
+                className="min-h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-600">Cancelar</button>
+            </div>
+          </div>
+        )}
+        {error && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{error}</p>}
+
         <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-start sm:p-5">
           <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-[#e9eefb] text-brand-navy">
             <Building2 size={28} strokeWidth={1.8} aria-hidden="true" />
@@ -114,7 +158,7 @@ export function CompanyDetailModal({ company, onClose }) {
           <div className="min-w-0">
             <p className="text-sm font-semibold text-brand-navy">Estado administrativo: {shown(status)}</p>
             <p className="mt-1 text-xs leading-5 text-slate-600">
-              El estado determina qué operaciones puede realizar la empresa. Los cambios se gestionarán con autorización del servidor.
+              Solo los administradores pueden aprobar, rechazar o suspender empresas. Esta decisión se guarda en SQLite.
             </p>
           </div>
         </div>

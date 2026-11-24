@@ -255,3 +255,10 @@ svg {
 button[aria-label="Página anterior"], button[aria-label="Página siguiente"] { min-width: 34px; min-height: 34px; border: 1px solid #e2e8f0; border-radius: .55rem; background-color: #fff; color: #142b49; }
 button[aria-label="Página anterior"]:hover:not(:disabled),button[aria-label="Página siguiente"]:hover:not(:disabled) { background-color: #eef2f9; }
 button[aria-label="Página anterior"]:disabled,button[aria-label="Página siguiente"]:disabled { opacity: .4; }
+
+/* Campos de autenticación: conservar la selección y edición nativas. */
+.auth-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.auth-form textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}

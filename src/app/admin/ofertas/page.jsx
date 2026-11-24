@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BriefcaseBusiness,
   CalendarClock,
@@ -14,50 +14,11 @@ import {
   UsersRound,
   X,
 } from "lucide-react";
+import { consultarAdministracion } from "@/components/admin/admin-api";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { TablePagination } from "@/components/table-pagination";
 import { OFFER_TYPE_OPTIONS } from "@/lib/offer-types";
 import { OfferModerationModal } from "@/components/admin/offer-moderation-modal";
-
-// Datos de interfaz para el diseño. No son registros recuperados de SQLite.
-const exampleOffers = [
-  {
-    id: "ejemplo-1", title: "Desarrollo frontend · nivel inicial", company: "Empresa tecnológica",
-    type: "Internships", typeLabel: "Internships", mode: "Híbrida", axis: "Ciencia y tecnología",
-    promoted: true, vacancies: "—", applications: "—", published: "—", expires: "—",
-    description: "Participa en la construcción de interfaces web y colabora con un equipo de producto.",
-  },
-  {
-    id: "ejemplo-2", title: "Análisis de datos para operaciones", company: "Organización de servicios",
-    type: "Prácticas profesionales", typeLabel: "Prácticas profesionales", mode: "Remota", axis: "Ciencia y tecnología",
-    promoted: false, vacancies: "—", applications: "—", published: "—", expires: "—",
-    description: "Apoya el análisis de información operativa y la preparación de tableros de seguimiento.",
-  },
-  {
-    id: "ejemplo-3", title: "Apoyo en automatización de procesos", company: "Empresa industrial",
-    type: "Servicio social", typeLabel: "Servicio social", mode: "Presencial", axis: "Industria y energía",
-    promoted: false, vacancies: "—", applications: "—", published: "—", expires: "—",
-    description: "Colabora en la documentación y automatización de procesos internos de ingeniería.",
-  },
-  {
-    id: "ejemplo-4", title: "Ingeniería de soporte junior", company: "Consultoría de tecnología",
-    type: "Empleo", typeLabel: "Empleo", mode: "Híbrida", axis: "Ciencia y tecnología",
-    promoted: false, vacancies: "—", applications: "—", published: "—", expires: "—",
-    description: "Atiende requerimientos técnicos y contribuye a mejorar las guías internas del equipo.",
-  },
-  {
-    id: "ejemplo-5", title: "Diseño mecánico y prototipado 3D", company: "Estudio de ingeniería",
-    type: "Prácticas profesionales", typeLabel: "Prácticas profesionales", mode: "Presencial", axis: "Industria y energía",
-    promoted: false, vacancies: "—", applications: "—", published: "—", expires: "—",
-    description: "Apoya la elaboración de modelos, planos y prototipos para proyectos de desarrollo de producto.",
-  },
-  {
-    id: "ejemplo-6", title: "Desarrollo IoT para monitoreo", company: "Organización de tecnología",
-    type: "Internships", typeLabel: "Internships", mode: "Remota", axis: "Ciencia y tecnología",
-    promoted: false, vacancies: "—", applications: "—", published: "—", expires: "—",
-    description: "Colabora en prototipos de sensores y visualización de datos para aplicaciones conectadas.",
-  },
-];
 
 const metricDefinitions = [
   { title: "OFERTAS ACTIVAS", subtitle: "Publicadas y vigentes", icon: BriefcaseBusiness, iconBg: "bg-[#e6eeff]", iconColor: "text-[#18395e]", footerBg: "bg-emerald-50", footerColor: "text-emerald-700", strip: "bg-emerald-500" },
@@ -68,15 +29,15 @@ const metricDefinitions = [
 
 const initialFilters = { company: "", type: "", mode: "", axis: "", promotion: "", date: "" };
 const normalize = (value) => String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es");
-const uniqueOptions = (field) => [...new Set(exampleOffers.map((offer) => offer[field]).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
 
-function OverviewMetric({ title, subtitle, icon: Icon, iconBg, iconColor, footerBg, footerColor, strip }) {
+
+function OverviewMetric({ title, subtitle, icon: Icon, iconBg, iconColor, footerBg, footerColor, strip, value }) {
   return (
     <article className="relative flex min-w-0 flex-col justify-between overflow-hidden rounded-xl border border-slate-100 bg-white px-4 pb-4 pt-4 shadow-[0_3px_16px_rgba(20,43,73,0.045)]">
       <div className="flex min-h-20 items-start justify-between gap-2">
         <div className="min-w-0">
           <h2 className="text-[10px] font-bold uppercase leading-[1.4] tracking-[0.065em] text-slate-600 sm:text-[11px]">{title}</h2>
-          <p className="mt-2 text-[2.1rem] font-extrabold leading-none tracking-[-0.04em] text-brand-navy" aria-label={`${title}: sin datos conectados`}>—</p>
+          <p className="mt-2 text-[2.1rem] font-extrabold leading-none tracking-[-0.04em] text-brand-navy" aria-label={`${title}: ${value ?? "cargando"}`}>{value ?? "—"}</p>
         </div>
         <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${iconBg} ${iconColor}`}><Icon size={18} aria-hidden="true" /></span>
       </div>
@@ -141,6 +102,10 @@ function csvCell(value) {
 }
 
 export default function AdminOffersPage() {
+  const [data,setData]=useState({ofertas:[],metricas:[]});
+  const [loadState,setLoadState]=useState("Cargando ofertas…");
+  useEffect(()=>{const controller=new AbortController();consultarAdministracion("ofertas",controller.signal).then(d=>{setData(d);setLoadState("");}).catch(e=>{if(!controller.signal.aborted)setLoadState(e.message);});return ()=>controller.abort();},[]);
+  const uniqueOptions=field=>[...new Set(data.ofertas.map(o=>o[field]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState(initialFilters);
   const [filtersVisible, setFiltersVisible] = useState(true);
@@ -149,7 +114,7 @@ export default function AdminOffersPage() {
   const [perPage, setPerPage] = useState(5);
   const closeModal = useCallback(() => setSelectedOffer(null), []);
 
-  const filteredOffers = useMemo(() => exampleOffers.filter((offer) => {
+  const filteredOffers = useMemo(() => data.ofertas.filter((offer) => {
     const terms = [offer.title, offer.company, offer.axis, offer.typeLabel, offer.mode].join(" ");
     if (search.trim() && !normalize(terms).includes(normalize(search.trim()))) return false;
     if (filters.company && offer.company !== filters.company) return false;
@@ -157,10 +122,9 @@ export default function AdminOffersPage() {
     if (filters.mode && offer.mode !== filters.mode) return false;
     if (filters.axis && offer.axis !== filters.axis) return false;
     if (filters.promotion && (filters.promotion === "yes") !== offer.promoted) return false;
-    // No se inventan fechas de publicación o vencimiento para estos ejemplos.
-    if (filters.date) return false;
+    if (filters.date && offer.published !== filters.date) return false;
     return true;
-  }), [search, filters]);
+  }), [data.ofertas, search, filters]);
 
   const pageCount = Math.max(1, Math.ceil(filteredOffers.length / perPage));
   const safePage = Math.min(page, pageCount);
@@ -172,10 +136,10 @@ export default function AdminOffersPage() {
   function resetView() { setSearch(""); setFilters(initialFilters); setPage(1); setFiltersVisible(true); }
   function exportCsv() {
     const headers = ["Oferta", "Empresa", "Tipo", "Modalidad", "Eje de acción", "Plazas", "Postulaciones", "Publicación", "Vencimiento", "Promoción", "Estado"];
-    const rows = filteredOffers.map((offer) => [offer.title, offer.company, offer.typeLabel, offer.mode, offer.axis, offer.vacancies, offer.applications, offer.published, offer.expires, offer.promoted ? "Promocionada" : "Estándar", "Activa (ejemplo)"]);
+    const rows = filteredOffers.map((offer) => [offer.title, offer.company, offer.typeLabel, offer.mode, offer.axis, offer.vacancies, offer.applications, offer.published, offer.expires, offer.promoted ? "Promocionada" : "Estándar", "Activa"]);
     const content = "\uFEFF" + [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
     const url = URL.createObjectURL(new Blob([content], { type: "text/csv;charset=utf-8;" }));
-    const link = document.createElement("a"); link.href = url; link.download = "conectu-ofertas-ejemplo.csv"; document.body.appendChild(link); link.click(); link.remove();
+    const link = document.createElement("a"); link.href = url; link.download = "conectu-ofertas.csv"; document.body.appendChild(link); link.click(); link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
@@ -191,8 +155,9 @@ export default function AdminOffersPage() {
           </div>
         </div>
 
+        {loadState && <p role="status" className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-600">{loadState}</p>}
         <section aria-label="Indicadores de ofertas" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {metricDefinitions.map((metric) => <OverviewMetric key={metric.title} {...metric} />)}
+          {metricDefinitions.map((metric,i) => <OverviewMetric key={metric.title} {...metric} value={data.metricas[i]} />)}
         </section>
 
         <section aria-label="Búsqueda y filtros de ofertas" className="rounded-xl border border-slate-100 bg-white p-3 shadow-[0_3px_15px_rgba(20,43,73,0.045)] sm:p-4">
@@ -212,7 +177,7 @@ export default function AdminOffersPage() {
               <FilterField label="Modalidad" value={filters.mode} onChange={(v) => changeFilter("mode", v)} all="Todas" options={uniqueOptions("mode")} />
               <FilterField label="Eje de acción" value={filters.axis} onChange={(v) => changeFilter("axis", v)} all="Todos los ejes" options={uniqueOptions("axis")} />
               <FilterField label="Promoción" value={filters.promotion} onChange={(v) => changeFilter("promotion", v)} all="Todas" options={[{ value: "yes", label: "Promocionadas" }, { value: "no", label: "Estándar" }]} />
-              <FilterField label="Fecha" value={filters.date} onChange={(v) => changeFilter("date", v)} all="Todas las fechas" options={[]} disabled />
+              <FilterField label="Fecha" value={filters.date} onChange={(v) => changeFilter("date", v)} all="Todas las fechas" options={uniqueOptions("published")} />
               <button type="button" onClick={resetView} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-[#f5f7fd] px-2 text-[12px] font-semibold text-slate-600 hover:bg-slate-100"><RotateCcw size={14} /> Restablecer</button>
             </div>
           )}
@@ -220,7 +185,7 @@ export default function AdminOffersPage() {
 
         <section aria-label="Directorio de ofertas vigentes" className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-[0_3px_15px_rgba(20,43,73,0.045)]">
           <div className="flex flex-col justify-between gap-2 bg-[#eef3ff] px-4 py-3 text-[12px] sm:flex-row sm:items-center sm:gap-4">
-            <div className="flex flex-wrap items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" /><span className="font-bold text-brand-navy">Directorio de ofertas vigentes</span><span className="text-slate-500">| Registros de ejemplo</span></div>
+            <div className="flex flex-wrap items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" /><span className="font-bold text-brand-navy">Directorio de ofertas vigentes</span><span className="text-slate-500">| Registros de SQLite</span></div>
             <span className="text-[11px] text-slate-500">Solo publicaciones activas</span>
           </div>
 
@@ -268,11 +233,11 @@ export default function AdminOffersPage() {
             page={safePage} pages={pageCount} onChange={setPage}
             total={filteredOffers.length} pageSize={perPage}
             onPageSizeChange={(size) => { setPerPage(size); setPage(1); }}
-            label="ofertas de ejemplo"
+            label="ofertas"
           />
         </section>
       </div>
-      <OfferModerationModal offer={selectedOffer} onClose={closeModal} />
+      <OfferModerationModal offer={selectedOffer} onClose={closeModal} onSaved={d=>{setData(d);closeModal();}} />
     </DashboardShell>
   );
 }

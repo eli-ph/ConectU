@@ -14,9 +14,10 @@ function Feedback({ children }) {
   );
 }
 
-export function VerificationCodeForm() {
+export function VerificationCodeForm({ correo, devMode = false }) {
   const [digits, setDigits] = useState(Array(6).fill(""));
   const [feedback, setFeedback] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const inputs = useRef([]);
 
   function updateAt(index, value) {
@@ -52,47 +53,65 @@ export function VerificationCodeForm() {
     }
   }
 
-  function handleSubmit(event) {
+  async function post(url, data) {
+    const response = await fetch(url, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});
+    return response.json();
+  }
+
+  async function handleSubmit(event) {
     event.preventDefault();
     if (digits.some((value) => !value)) {
-      setFeedback("Introduce los 6 dígitos del código.");
+      setFeedback("Introduce los seis dígitos del código.");
       return;
     }
-    setFeedback("La verificación estará disponible cuando se conecte el servicio de autenticación.");
+    setSubmitting(true); setFeedback("");
+    try {
+      const result = await post("/api/auth/correo/verificar",{codigo:digits.join("")});
+      if (result.ok) {
+        window.location.assign(result.redirect || "/ingresar");
+        return;
+      }
+      setFeedback(result.message || "Código no válido.");
+    } catch { setFeedback("No fue posible conectar con el servidor."); }
+    finally { setSubmitting(false); }
+  }
+
+  async function resend() {
+    setSubmitting(true); setFeedback("");
+    try {
+      const result = await post("/api/auth/correo/reenviar",{});
+      setFeedback(result.message || "No fue posible reenviar el código.");
+    } catch { setFeedback("No fue posible conectar con el servidor."); }
+    finally { setSubmitting(false); }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-7">
+    <form onSubmit={handleSubmit} className="mt-7" aria-busy={submitting}>
+      <div className="mb-6 rounded-xl border border-slate-200 bg-[#eff2fc] px-4 py-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Correo institucional</p>
+        <p className="mt-1 break-all text-sm font-semibold text-brand-navy">{correo}</p>
+      </div>
       <label className="block text-center text-xs font-bold uppercase tracking-[0.1em] text-brand-navy" htmlFor="verification-digit-0">
         Código de 6 dígitos
       </label>
       <div className="mt-4 flex justify-center gap-1.5 sm:gap-3" role="group" aria-label="Introduce el código de verificación de seis dígitos">
         {digits.map((digit, index) => (
-          <input
-            key={index}
-            ref={(element) => { inputs.current[index] = element; }}
-            id={`verification-digit-${index}`}
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            autoComplete={index === 0 ? "one-time-code" : "off"}
-            maxLength={index === 0 ? 6 : 1}
-            value={digit}
-            onChange={(event) => updateAt(index, event.target.value)}
-            onPaste={(event) => handlePaste(event, index)}
-            onKeyDown={(event) => handleKeyDown(event, index)}
-            aria-label={`Dígito ${index + 1} de 6`}
-            className="h-12 w-full min-w-0 max-w-12 flex-1 rounded-lg border border-slate-300 bg-[#f6f7fc] text-center text-xl font-bold text-brand-navy outline-none transition focus:border-brand-navy focus:bg-white focus:ring-2 focus:ring-brand-navy/15 sm:h-14"
-          />
+          <input key={index} ref={element => { inputs.current[index] = element; }} id={`verification-digit-${index}`}
+            type="text" inputMode="numeric" pattern="[0-9]*" autoComplete={index === 0 ? "one-time-code" : "off"}
+            maxLength={index === 0 ? 6 : 1} value={digit} onChange={e => updateAt(index,e.target.value)}
+            onPaste={e => handlePaste(e,index)} onKeyDown={e => handleKeyDown(e,index)}
+            aria-label={`Dígito ${index+1} de 6`}
+            className="h-12 w-full min-w-0 max-w-12 flex-1 rounded-lg border border-slate-300 bg-[#f6f7fc] text-center text-xl font-bold text-brand-navy outline-none transition focus:border-brand-navy focus:bg-white focus:ring-2 focus:ring-brand-navy/15 sm:h-14" />
         ))}
       </div>
-      <p className="mt-3 text-center text-xs text-slate-500">Ingresa los números que recibiste por correo.</p>
-      <button type="submit" className="ui-button-primary mt-7 min-h-12 w-full gap-2 rounded-xl text-base">
+      <p className="mt-3 text-center text-xs text-slate-500">El código expira después de 10 minutos y admite hasta 5 intentos.</p>
+      {devMode && <p className="mt-2 text-center text-xs font-semibold text-amber-700">Modo de desarrollo: consulta el código en la terminal donde ejecutas Next.js. No se envió un correo real.</p>}
+      <button disabled={submitting} type="submit" className="ui-button-primary mt-7 min-h-12 w-full gap-2 rounded-xl text-base disabled:opacity-60">
         <CircleCheck size={19} aria-hidden="true" /> Verificar código
       </button>
       <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-slate-600">
         <span>¿No recibiste el código?</span>
-        <button type="button" onClick={() => setFeedback("El reenvío estará disponible al habilitar el servicio de correo.")} className="inline-flex items-center gap-1.5 font-semibold text-brand-gold-dark hover:underline">
+        <button disabled={submitting} type="button" onClick={resend} className="inline-flex items-center gap-1.5 font-semibold text-brand-gold-dark hover:underline disabled:opacity-60">
           <RefreshCcw size={15} aria-hidden="true" /> Reenviar código
         </button>
       </div>

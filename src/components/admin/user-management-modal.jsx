@@ -1,5 +1,6 @@
 "use client";
 
+import { operacionAdministracion } from "@/components/admin/admin-api";
 import { useEffect, useId, useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, LockKeyhole, ShieldAlert, UserRound, X } from "lucide-react";
 
@@ -76,7 +77,7 @@ export function UserDetailsModal({ user, onClose, onManage }) {
           </div>
           <footer className="flex shrink-0 flex-col-reverse gap-2 border-t border-slate-100 bg-[#f7f8fd] px-5 py-4 sm:flex-row sm:justify-end sm:px-7">
             <button type="button" onClick={onClose} className="min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-brand-navy hover:bg-slate-50">Cerrar</button>
-            <button type="button" onClick={() => onManage(user)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-navy px-5 text-sm font-bold text-white hover:bg-brand-navy-light"><LockKeyhole size={17} /> Gestionar usuario</button>
+            <button type="button" disabled={user.own} onClick={() => onManage(user)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-navy px-5 text-sm font-bold text-white hover:bg-brand-navy-light"><LockKeyhole size={17} /> Gestionar usuario</button>
           </footer>
         </>
       )}
@@ -84,11 +85,12 @@ export function UserDetailsModal({ user, onClose, onManage }) {
   );
 }
 
-export function UserManagementModal({ user, onClose }) {
+export function UserManagementModal({ user, onClose, onSaved }) {
   const titleId = useId();
   const [action, setAction] = useState("suspender");
   const [reason, setReason] = useState("");
   const [message, setMessage] = useState("");
+  const [busy,setBusy]=useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -97,14 +99,16 @@ export function UserManagementModal({ user, onClose }) {
     setMessage("");
   }, [user]);
 
-  const submitDecision = (event) => {
+  const submitDecision = async (event) => {
     event.preventDefault();
     if (reason.trim().length < 10) {
       setMessage("Escribe un motivo de al menos 10 caracteres antes de continuar.");
       return;
     }
-    // Las decisiones de administración de cuentas solo pueden confirmarse en servidor.
-    setMessage("No se realizaron cambios en la cuenta. La operación debe conectarse al sistema de administración y autorización.");
+    if(busy||user.own)return;
+    setBusy(true);
+    try { onSaved(await operacionAdministracion({operacion:"usuario",id:user.id,accion:action,motivo:reason.trim()})); }
+    catch(e){setMessage(e.message);}finally{setBusy(false);}
   };
 
   return (
@@ -123,7 +127,7 @@ export function UserManagementModal({ user, onClose }) {
             <label className="block text-xs font-bold uppercase tracking-[0.05em] text-slate-600">
               Acción a ejecutar <span className="text-red-600">*</span>
               <select value={action} onChange={(event) => { setAction(event.target.value); setMessage(""); }} className="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-[#f3f4fc] px-3 text-sm font-medium normal-case tracking-normal text-brand-navy outline-none focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/10">
-                <option value="suspender">Suspender temporalmente</option>
+                {user.status !== "suspendido" && <option value="suspender">Suspender temporalmente</option>}
                 {user.status === "suspendido" && <option value="reactivar">Reactivar cuenta</option>}
                 <option value="eliminar">Eliminar cuenta</option>
               </select>
@@ -138,7 +142,7 @@ export function UserManagementModal({ user, onClose }) {
           </div>
           <footer className="flex shrink-0 flex-col-reverse gap-2 border-t border-slate-100 bg-[#f7f8fd] px-5 py-4 sm:flex-row sm:justify-end sm:px-7">
             <button type="button" onClick={onClose} className="min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-brand-navy transition hover:bg-slate-50">Cancelar</button>
-            <button type="submit" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-red-700 px-5 text-sm font-bold text-white transition hover:bg-red-800"><CheckCircle2 size={17} aria-hidden="true" /> Confirmar acción</button>
+            <button type="submit" disabled={busy||user.own} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-red-700 px-5 text-sm font-bold text-white transition hover:bg-red-800"><CheckCircle2 size={17} aria-hidden="true" /> Confirmar acción</button>
           </footer>
         </form>
       )}

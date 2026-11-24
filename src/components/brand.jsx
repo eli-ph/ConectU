@@ -4,12 +4,12 @@ import Link from "next/link";
  * `light` utiliza la variante blanca y dorada sobre fondos oscuros.
  * La imagen no añade fondos ni rellenos alrededor del logotipo.
  */
-export function Brand({ compact = false, href = "/", light = false }) {
+export function Brand({ compact = false, light = false }) {
   const logoSrc = light ? "/logo-conectu-dark.svg" : "/logo-conectu.svg";
 
   return (
     <Link
-      href={href}
+      href="/"
       className="inline-flex shrink-0 items-center"
       aria-label="ConectU, ir al inicio"
     >

@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Award,
   BarChart3,
-  Bell,
   BriefcaseBusiness,
   Building2,
   CircleUserRound,
@@ -16,13 +15,13 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
-  Settings,
   ShieldCheck,
   Tags,
   UsersRound,
   X,
 } from "lucide-react";
 import { Brand } from "@/components/brand";
+import { NotificationBell } from "@/components/notification-bell";
 
 const navigation = {
   estudiante: [
@@ -51,23 +50,29 @@ const navigation = {
 const roleMeta = {
   estudiante: {
     label: "Panel del estudiante",
-    name: "David Hernández",
     subrole: "Estudiante",
-    initials: "DH",
   },
   empresa: {
     label: "Panel empresarial",
-    name: "TechCorp Global",
-    subrole: "Recursos Humanos",
-    initials: "TG",
+    subrole: "Empresa",
   },
   admin: {
     label: "Panel administrativo",
-    name: "Administración",
     subrole: "Administrador",
-    initials: "AD",
   },
 };
+
+function identidadUsuario(user, role) {
+  if (!user || user.rol !== role) return null;
+  const nombre = typeof user.nombre === "string" ? user.nombre.trim() : "";
+  const apellidos = typeof user.apellidos === "string" ? user.apellidos.trim() : "";
+  const name = [nombre, apellidos].filter(Boolean).join(" ").replace(/\s+/g, " ");
+  if (!name) return null;
+  const partes = name.split(" ");
+  const initials = [partes[0], apellidos ? apellidos.split(/\s+/)[0] : partes[1]]
+    .filter(Boolean).map(parte => Array.from(parte)[0]).join("").toUpperCase();
+  return { name, initials };
+}
 
 export function DashboardShell({
   role,
@@ -81,8 +86,39 @@ export function DashboardShell({
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notificationFilter, setNotificationFilter] = useState("todas");
+  const [closingSession, setClosingSession] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
+  const logoutPending = useRef(false);
   const meta = roleMeta[role];
+  const [sessionIdentity, setSessionIdentity] = useState(null);
+  const identity = sessionIdentity?.pathname === pathname && sessionIdentity?.role === role
+    ? sessionIdentity.identity : null;
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+
+    async function cargarIdentidad() {
+      try {
+        const response = await fetch("/api/auth/me", {
+          cache: "no-store",
+          credentials: "same-origin",
+          signal: controller.signal,
+        });
+        const data = response.ok ? await response.json() : null;
+        if (!active) return;
+        setSessionIdentity({ pathname, role, identity: data?.ok ? identidadUsuario(data.user, role) : null });
+      } catch {
+        if (active) setSessionIdentity(null);
+      }
+    }
+
+    cargarIdentidad();
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [pathname, role]);
 
   useEffect(() => {
     if (!menuOpen && !notificationsOpen) return;
@@ -105,6 +141,30 @@ export function DashboardShell({
     };
   }, [menuOpen]);
 
+  async function cerrarSesion() {
+    if (logoutPending.current) return;
+    logoutPending.current = true;
+    setClosingSession(true);
+    setLogoutError("");
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      const data = await response.json();
+      if (!response.ok || data?.ok !== true) {
+        throw new Error(data?.message || "No se pudo cerrar la sesión.");
+      }
+      // Navegación completa: descarta el estado y la caché de rutas del panel.
+      window.location.replace("/ingresar");
+    } catch (error) {
+      setLogoutError(error?.message || "No se pudo cerrar la sesión. Intenta nuevamente.");
+      logoutPending.current = false;
+      setClosingSession(false);
+    }
+  }
+
   const isActive = (href) =>
     href === `/${role}` ? pathname === href : pathname.startsWith(href);
 
@@ -121,6 +181,7 @@ export function DashboardShell({
           <Link
             key={href}
             href={href}
+            prefetch={href === "/empresa/estadisticas" ? false : undefined}
             aria-current={isActive(href) ? "page" : undefined}
             onClick={() => setMenuOpen(false)}
             className={`flex min-h-11 items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-semibold transition-colors ${
@@ -142,20 +203,18 @@ export function DashboardShell({
       </nav>
 
       <div className="border-t border-slate-100 p-3">
-        <Link
-          href={`/${role}/cuenta`}
-          onClick={() => setMenuOpen(false)}
-          className="flex min-h-11 items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-brand-navy"
+        <button
+          type="button"
+          onClick={cerrarSesion}
+          disabled={closingSession}
+          aria-busy={closingSession}
+          className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-brand-navy disabled:cursor-wait disabled:opacity-60"
         >
-          <Settings size={18} /> Mi cuenta y seguridad
-        </Link>
-        <Link
-          href="/ingresar"
-          onClick={() => setMenuOpen(false)}
-          className="flex min-h-11 items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-brand-navy"
-        >
-          <LogOut size={18} /> Cerrar sesión
-        </Link>
+          <LogOut size={18} aria-hidden="true" /> {closingSession ? "Cerrando sesión…" : "Cerrar sesión"}
+        </button>
+        {logoutError && (
+          <p role="alert" className="px-3.5 pt-2 text-xs text-red-700">{logoutError}</p>
+        )}
       </div>
     </aside>
   );
@@ -240,27 +299,19 @@ export function DashboardShell({
                 <span className="hidden sm:inline">Explorar ofertas</span>
               </Link>
             )}
-            <button
-              type="button"
-              className="grid h-11 w-11 place-items-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-brand-navy"
-              onClick={() => setNotificationsOpen((value) => !value)}
-              aria-expanded={notificationsOpen}
-              aria-label="Ver notificaciones"
-              aria-controls="popover-notificaciones"
-            >
-              <Bell size={20} />
-            </button>
+            <NotificationBell open={notificationsOpen} onToggle={() => setNotificationsOpen(v => !v)} onClose={() => setNotificationsOpen(false)} />
             <Link
               href={`/${role}/cuenta`}
               className="flex items-center gap-2 rounded-xl p-1.5 transition hover:bg-slate-100"
-              aria-label="Abrir mi cuenta"
+              aria-label={identity ? `Abrir mi cuenta: ${identity.name}` : "Abrir mi cuenta"}
+              title={identity?.name || meta.subrole}
             >
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-navy text-xs font-bold text-white ring-2 ring-brand-gold/20">
-                {meta.initials}
+                {identity?.initials || <CircleUserRound size={18} aria-hidden="true" />}
               </span>
               <span className="hidden max-w-36 min-w-0 text-left md:block">
                 <span className="block truncate text-xs font-bold text-slate-800">
-                  {meta.name}
+                  {identity?.name || meta.subrole}
                 </span>
                 <span className="block text-[0.7rem] text-slate-500">
                   {meta.subrole}
@@ -268,72 +319,7 @@ export function DashboardShell({
               </span>
             </Link>
 
-            {notificationsOpen && (
-              <div
-                id="popover-notificaciones"
-                className="absolute right-0 top-[58px] z-50 w-[min(370px,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-raised"
-              >
-                <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-4">
-                  <div>
-                    <p className="text-sm font-bold text-brand-navy">
-                      Notificaciones
-                    </p>
-                    <p className="mt-0.5 text-xs text-slate-500">
-                      Avisos de la plataforma
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100"
-                    aria-label="Cerrar notificaciones"
-                    onClick={() => setNotificationsOpen(false)}
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-                <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-2.5">
-                  <div
-                    className="flex gap-1 rounded-lg bg-slate-100 p-1"
-                    role="group"
-                    aria-label="Filtrar notificaciones"
-                  >
-                    {["todas", "no-leidas"].map((filter) => (
-                      <button
-                        type="button"
-                        key={filter}
-                        aria-pressed={notificationFilter === filter}
-                        onClick={() => setNotificationFilter(filter)}
-                        className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
-                          notificationFilter === filter
-                            ? "bg-white text-brand-navy shadow-sm"
-                            : "text-slate-500 hover:text-brand-navy"
-                        }`}
-                      >
-                        {filter === "todas" ? "Todas" : "No leídas"}
-                      </button>
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    disabled
-                    className="text-xs font-semibold text-slate-400"
-                    title="No hay notificaciones que marcar como leídas"
-                  >
-                    Marcar leídas
-                  </button>
-                </div>
-                <div className="px-5 py-8 text-center">
-                  <Bell className="mx-auto text-slate-300" size={27} />
-                  <p className="mt-3 text-sm font-semibold text-slate-700">
-                    Sin notificaciones
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">
-                    Los avisos aparecerán aquí cuando se habilite la información
-                    real de la plataforma.
-                  </p>
-                </div>
-              </div>
-            )}
+            
           </div>
         </header>
 

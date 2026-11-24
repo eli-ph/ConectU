@@ -1,5 +1,6 @@
 "use client";
 
+import { operacionAdministracion } from "@/components/admin/admin-api";
 import { useEffect, useId, useRef, useState } from "react";
 import { AlertTriangle, Ban, CheckCircle2, ClipboardCheck, PauseCircle, ShieldAlert, X } from "lucide-react";
 
@@ -37,17 +38,15 @@ function ResolutionCard({ selected, title, description, icon: Icon, tone = "neut
   );
 }
 
-/**
- * Vista de moderación; la operación real se conectará al caso de uso autorizado.
- * Este componente no altera el estado de la oferta ni los datos del cliente.
- */
-export function OfferModerationModal({ offer, onClose }) {
+// La resolución se guarda en el servidor con bitácora y permisos.
+export function OfferModerationModal({ offer, onClose, onSaved }) {
   const [decision, setDecision] = useState("mantener");
   const [reason, setReason] = useState("");
   const [justification, setJustification] = useState("");
   const [notifyStudents, setNotifyStudents] = useState(true);
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState("");
+  const [busy,setBusy]=useState(false);
   const modalTitle = useId();
   const closeRef = useRef(null);
 
@@ -78,9 +77,9 @@ export function OfferModerationModal({ offer, onClose }) {
   const closingOffer = decision === "cerrar";
   const pausingOffer = decision === "pausar";
   const requiresReason = closingOffer || pausingOffer;
-  const criteria = closingOffer ? "Cierre definitivo" : pausingOffer ? "Pausa preventiva" : "Publicación vigente";
+  const criteria = closingOffer ? "Cierre definitivo por administración" : pausingOffer ? "Pausa preventiva" : "Publicación vigente";
 
-  function validate(event) {
+  async function validate(event) {
     event.preventDefault();
     setError("");
     if (requiresReason && !reason) {
@@ -95,7 +94,10 @@ export function OfferModerationModal({ offer, onClose }) {
       setError("Confirma que revisaste la oferta y su información relacionada.");
       return;
     }
-    setError("La decisión no se guardó: se habilitará al conectar la moderación con el servidor.");
+    if(busy)return;
+    setBusy(true);
+    try{onSaved(await operacionAdministracion({operacion:"oferta",id:offer.id,decision,motivo:reason,justificacion:justification,notificar:notifyStudents,confirmed}));}
+    catch(e){setError(e.message);}finally{setBusy(false);}
   }
 
   return (
@@ -149,7 +151,7 @@ export function OfferModerationModal({ offer, onClose }) {
                 </div>
                 <div>
                   <p className="text-[0.68rem] font-bold uppercase tracking-[0.06em] text-slate-500">Postulantes</p>
-                  <p className="mt-1 text-sm font-semibold text-red-700">{offer.applications || "—"}</p>
+                  <p className="mt-1 text-sm font-semibold text-red-700">{offer.applications ?? "—"}</p>
                 </div>
               </div>
             </section>
@@ -160,7 +162,7 @@ export function OfferModerationModal({ offer, onClose }) {
               </label>
               <span className="text-xs font-medium text-slate-500">Criterio de revisión: {criteria}</span>
             </div>
-            <div className="mt-3 grid gap-3 md:grid-cols-3">
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
               <ResolutionCard
                 selected={decision === "mantener"}
                 title="Mantener activa"
@@ -172,19 +174,12 @@ export function OfferModerationModal({ offer, onClose }) {
               <ResolutionCard
                 selected={decision === "cerrar"}
                 title="Cerrar convocatoria"
-                description="Cierre por incumplimiento o ajuste necesario."
+                description="Cierre administrativo que impide la reactivación directa por la empresa."
                 icon={Ban}
                 tone="danger"
                 onClick={() => { setDecision("cerrar"); setError(""); }}
               />
-              <ResolutionCard
-                selected={decision === "pausar"}
-                title="Pausar publicación"
-                description="Suspensión temporal mientras se revisa el caso."
-                icon={PauseCircle}
-                tone="warning"
-                onClick={() => { setDecision("pausar"); setError(""); }}
-              />
+
             </div>
 
             <div className="mt-5 grid gap-4">
@@ -266,6 +261,7 @@ export function OfferModerationModal({ offer, onClose }) {
             </button>
             <button
               type="submit"
+              disabled={busy}
               className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition ${closingOffer ? "bg-red-700 hover:bg-red-800" : pausingOffer ? "bg-amber-600 hover:bg-amber-700" : "bg-brand-navy hover:bg-brand-navy-light"}`}
             >
               <ClipboardCheck size={17} />

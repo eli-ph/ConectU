@@ -3,11 +3,11 @@ import "./globals.css";
 
 export const metadata = {
   title: {
-    default: "Vinculación Universitaria",
-    template: "%s | Vinculación Universitaria",
+    default: "ConectU",
+    template: "%s | ConectU",
   },
   description:
-    "Plataforma de vinculación entre estudiantes universitarios y empresas.",
+    "ConectU: plataforma de vinculación entre estudiantes universitarios y empresas.",
 };
 
 export default function RootLayout({ children }) {

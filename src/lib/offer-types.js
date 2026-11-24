@@ -1,8 +1,8 @@
 // Etiquetas únicas para los cuatro tipos de convocatoria en toda ConectU.
-// Al conectar SQLite, el repositorio deberá mapearlas a los códigos definitivos del esquema.
+// Las claves son los códigos canónicos de SQLite; las etiquetas no cambian.
 export const OFFER_TYPE_LABELS = Object.freeze({
   empleo: "Empleo",
-  internships: "Internships",
+  internship: "Internships",
   servicio_social: "Servicio social",
   practicas: "Prácticas profesionales",
 });

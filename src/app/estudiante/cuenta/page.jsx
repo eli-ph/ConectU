@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Award, BookOpen, Building2, CheckCircle2, Code2, Download, FileText, GraduationCap, Hash, IdCard, LockKeyhole, Mail, MapPin, Save, ShieldCheck, Sparkles, Upload, User } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { PasswordStrength } from "@/components/password-strength";
 import { SkillPicker } from "@/components/skill-picker";
 import { checkPassword } from "@/lib/password-policy";
 import { SEMESTER_NUMBERS } from "@/lib/student-options";
+import { nombreVisibleCarrera } from "@/lib/career-name";
 import { Panel, primaryButton, secondaryButton } from "@/components/dashboard-ui";
 
 function SectionHeader({ icon: Icon, title, description, badge }) {
@@ -101,23 +102,111 @@ export default function StudentAccountPage() {
   const [career, setCareer] = useState("");
   const [semester, setSemester] = useState("");
   const [gpa, setGpa] = useState("");
-
   const [extract, setExtract] = useState("");
-  const [skillInput, setSkillInput] = useState("");
   const [skills, setSkills] = useState([]);
-
+  const [catalogos, setCatalogos] = useState({ facultades: [], carreras: [], habilidades: [] });
+  const [cv, setCv] = useState(null);
+  const [cargando, setCargando] = useState(true);
+  const [guardando, setGuardando] = useState(false);
+  const [subiendoCv, setSubiendoCv] = useState(false);
+  const [cambiandoPassword, setCambiandoPassword] = useState(false);
+  const [aviso, setAviso] = useState("");
+  const [errorGuardado, setErrorGuardado] = useState("");
+  const [error, setError] = useState("");
+  const [cvAviso, setCvAviso] = useState("");
+  const [passwordAviso, setPasswordAviso] = useState("");
+  const fileInput = useRef(null);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const passwordReady = !newPassword || (checkPassword(newPassword).valid && confirmPassword === newPassword);
+  const passwordReady = Boolean(currentPassword && newPassword && checkPassword(newPassword).valid && confirmPassword === newPassword);
 
+  useEffect(() => {
+    let mounted = true;
+    async function cargar() {
+      try {
+        const response = await fetch("/api/estudiante/cuenta", { cache: "no-store" });
+        const json = await response.json();
+        if (!response.ok || !json.ok) throw new Error(json.message || "No pudimos cargar tu perfil.");
+        if (!mounted) return;
+        const perfil = json.perfil;
+        setFullName(perfil.nombreCompleto || "");
+        setAccountNumber(perfil.numeroCuenta || "");
+        setEmail(perfil.correo || "");
+        setFaculty(String(perfil.facultadId ?? ""));
+        setCareer(String(perfil.carreraId ?? ""));
+        setSemester(String(perfil.semestre ?? ""));
+        setGpa(String(perfil.promedio ?? ""));
+        setLocation(perfil.ubicacion || "");
+        setExtract(perfil.resumen || "");
+        setSkills(perfil.habilidades || []);
+        setCv(perfil.cv);
+        setCatalogos(json.catalogos);
+      } catch (err) {
+        if (mounted) setError(err.message || "No pudimos cargar tu perfil.");
+      } finally {
+        if (mounted) setCargando(false);
+      }
+    }
+    cargar();
+    return () => { mounted = false; };
+  }, []);
+
+  async function guardarPerfil() {
+    setAviso(""); setErrorGuardado(""); setGuardando(true);
+    try {
+      const response = await fetch("/api/estudiante/cuenta", {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombreCompleto: fullName, numeroCuenta: accountNumber,
+          facultadId: faculty, carreraId: career, semestre: semester, promedio: gpa,
+          ubicacion: location, resumen: extract, habilidades: skills }),
+      });
+      const json = await response.json();
+      if (!response.ok || !json.ok) throw new Error(json.message || "No pudimos guardar los cambios.");
+      setAviso("Cambios guardados correctamente.");
+    } catch (err) { setErrorGuardado(err.message || "No pudimos guardar los cambios."); }
+    finally { setGuardando(false); }
+  }
+
+  async function actualizarPassword() {
+    setPasswordAviso(""); setCambiandoPassword(true);
+    try {
+      const response = await fetch("/api/estudiante/cuenta/password", {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actual: currentPassword, nueva: newPassword, confirmar: confirmPassword }),
+      });
+      const json = await response.json();
+      if (!response.ok || !json.ok) throw new Error(json.message || "No pudimos actualizar tu contraseña.");
+      window.location.assign(json.redirect || "/ingresar");
+    } catch (err) { setPasswordAviso(err.message || "No pudimos actualizar tu contraseña."); }
+    finally { setCambiandoPassword(false); }
+  }
+
+  async function subirCv(event) {
+    const archivo = event.target.files?.[0];
+    if (!archivo) return;
+    setCvAviso(""); setSubiendoCv(true);
+    try {
+      const form = new FormData(); form.append("cv", archivo);
+      const response = await fetch("/api/estudiante/cuenta/cv", { method: "POST", body: form });
+      const json = await response.json();
+      if (!response.ok || !json.ok) throw new Error(json.message || "No pudimos cargar tu CV.");
+      setCv(json.cv);
+      setCvAviso("Tu CV vigente se actualizó correctamente.");
+    } catch (err) { setCvAviso(err.message || "No pudimos cargar tu CV."); }
+    finally { setSubiendoCv(false); event.target.value = ""; }
+  }
+
+  const carrerasFiltradas = catalogos.carreras.filter((c) => String(c.facultad_id) === faculty);
   return (
     <DashboardShell
       role="estudiante"
       title="Mi cuenta"
-      eyebrow="CREDENCIALES VALIDADAS · ACTIVO"
+      eyebrow="CUENTA ESTUDIANTIL · CORREO VERIFICADO"
       description="Administra tus datos personales, información académica, tu CV vigente en PDF y la seguridad de tu cuenta institucional."
     >
+      {cargando && <div className="mb-5 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600" role="status">Cargando tus datos...</div>}
+      {error && <div className="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700" role="alert">{error}</div>}
       <div className="grid gap-6 xl:grid-cols-[1.65fr_0.85fr]">
         {/* Columna principal izquierda */}
         <div className="space-y-6">
@@ -126,7 +215,7 @@ export default function StudentAccountPage() {
               icon={IdCard}
               title="Datos personales y académicos"
               description="Completa o actualiza la información que acompaña tus postulaciones."
-              badge="Validado UNAM"
+              badge="Correo verificado"
             />
             <div className="grid gap-4 p-5 md:grid-cols-2">
               <div className="space-y-1.5">
@@ -161,7 +250,9 @@ export default function StudentAccountPage() {
                   icon={Mail}
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  readOnly
+                  aria-readonly="true"
+                  className="bg-slate-50"
                   placeholder="usuario@comunidad.unam.mx"
                 />
               </div>
@@ -171,15 +262,12 @@ export default function StudentAccountPage() {
                 <IconSelect
                   icon={Building2}
                   value={faculty}
-                  onChange={(e) => setFaculty(e.target.value)}
+                  onChange={(e) => { setFaculty(e.target.value); setCareer(""); }}
                 >
                   <option value="">Selecciona una facultad o escuela</option>
-                  <option value="Facultad de Ingeniería">Facultad de Ingeniería</option>
-                  <option value="Facultad de Ciencias">Facultad de Ciencias</option>
-                  <option value="Facultad de Contaduría y Administración">
-                    Facultad de Contaduría y Administración
-                  </option>
-                  <option value="FES Aragón">FES Aragón</option>
+                  {catalogos.facultades.map((f) => (
+                    <option key={f.id} value={String(f.id)}>{f.nombre}</option>
+                  ))}
                 </IconSelect>
               </div>
 
@@ -202,21 +290,9 @@ export default function StudentAccountPage() {
                   onChange={(e) => setCareer(e.target.value)}
                 >
                   <option value="">Selecciona tu carrera</option>
-                  <option value="Ingeniería en Computación">
-                    Ingeniería en Computación
-                  </option>
-                  <option value="Ingeniería Mecatrónica">
-                    Ingeniería Mecatrónica
-                  </option>
-                  <option value="Ingeniería Industrial">
-                    Ingeniería Industrial
-                  </option>
-                  <option value="Ingeniería Aeroespacial">
-                    Ingeniería Aeroespacial
-                  </option>
-                  <option value="Psicología ">
-                    Psicología
-                  </option>
+                  {carrerasFiltradas.map((c) => (
+                    <option key={c.id} value={String(c.id)}>{nombreVisibleCarrera(c.nombre)}</option>
+                  ))}
                 </IconSelect>
               </div>
 
@@ -263,23 +339,25 @@ export default function StudentAccountPage() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-800">
-                    Sin archivo PDF cargado aún
+                    {cv?.nombre || "Sin archivo PDF cargado aún"}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
-                    Sube tu CV en formato PDF para acompañarlo en tus postulaciones.
+                    {cv ? `Actualizado: ${new Date(cv.actualizadoEn).toLocaleDateString("es-MX")}` : "Sube tu CV en formato PDF (máximo 5 MB)."}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" className={secondaryButton}>
+                  <button type="button" className={secondaryButton} disabled={!cv} onClick={() => window.open("/api/estudiante/cuenta/cv", "_blank", "noopener,noreferrer")}>
                     <Download size={16} />
                     Ver PDF
                   </button>
-                  <button type="button" className={primaryButton}>
+                  <input ref={fileInput} type="file" accept=".pdf,application/pdf" className="hidden" onChange={subirCv} aria-label="Selecciona tu CV en PDF" />
+                  <button type="button" className={primaryButton} disabled={subiendoCv || cargando} onClick={() => fileInput.current?.click()}>
                     <Upload size={16} />
-                    Reemplazar CV
+                    {subiendoCv ? "Subiendo..." : cv ? "Reemplazar CV" : "Subir CV"}
                   </button>
                 </div>
               </div>
+              {cvAviso && <p className="mt-3 text-xs text-slate-700" role="status">{cvAviso}</p>}
             </div>
           </Panel>
 
@@ -333,15 +411,23 @@ export default function StudentAccountPage() {
 
               <PasswordStrength password={newPassword} />
               {confirmPassword && confirmPassword !== newPassword && <p className="text-xs font-semibold text-rose-700">Las contraseñas no coinciden.</p>}
+              {passwordAviso && <p className="text-xs text-rose-700" role="alert">{passwordAviso}</p>}
+              <div className="flex justify-end">
+                <button type="button" disabled={!passwordReady || cambiandoPassword} onClick={actualizarPassword} className={primaryButton}>
+                  <LockKeyhole size={16} /> {cambiandoPassword ? "Actualizando..." : "Actualizar contraseña"}
+                </button>
+              </div>
             </div>
           </Panel>
 
           
 
-          <div className="flex justify-end pt-1">
-            <button type="button" disabled={!passwordReady} className={primaryButton}>
+          <div className="flex flex-wrap items-center justify-end gap-3 pt-1">
+            {aviso && <p className="mr-auto flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800" role="status"><CheckCircle2 size={18}/>{aviso}</p>}
+            {errorGuardado && <p role="alert" className="mr-auto rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{errorGuardado}</p>}
+            <button type="button" disabled={guardando || cargando} onClick={guardarPerfil} className={primaryButton}>
               <Save size={16} />
-              Guardar cambios
+              {guardando ? "Guardando..." : "Guardar cambios"}
             </button>
           </div>
         </div>
@@ -359,6 +445,7 @@ export default function StudentAccountPage() {
                 rows={6}
                 value={extract}
                 onChange={(e) => setExtract(e.target.value)}
+                maxLength={1500}
                 placeholder="Escribe una breve descripción sobre tu perfil académico, áreas de interés o proyectos..."
                 className="w-full rounded-xl border border-slate-200 bg-white p-3.5 text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 focus:border-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-navy/10"
               />
@@ -372,7 +459,7 @@ export default function StudentAccountPage() {
               description="Etiquetas activas para emparejamiento con vacantes."
             />
             <div className="space-y-4 p-5">
-              <SkillPicker skills={skills} onChange={setSkills} label="Buscar habilidades técnicas" />
+              <SkillPicker skills={skills} onChange={setSkills} suggestions={catalogos.habilidades} allowCustom={false} label="Buscar habilidades técnicas" />
             </div>
           </Panel>
         </aside>

@@ -1,0 +1,9 @@
+import { NextResponse } from 'next/server';
+import { obtenerUsuarioDeRequest,borrarCookie } from '@/server/auth/session';
+import { verificarOrigen,leerJson,errorJson } from '@/server/auth/http';
+import { fail } from '@/server/services/http-errors';
+import { listadoOfertasAdmin,listadoUsuariosAdmin,catalogosAdmin,gestionarUsuario,resolverOfertaAdmin,guardarCatalogoAdmin,registrarAdministrador,cambiarClaveAdmin } from '@/server/services/administracion.service';
+export const runtime='nodejs';export const dynamic='force-dynamic';
+const json=data=>NextResponse.json({ok:true,...data},{headers:{'Cache-Control':'no-store'}});
+export async function GET(request){const user=obtenerUsuarioDeRequest(request);if(user?.rol!=='admin')return errorJson('Acceso denegado.',403);try{const vista=request.nextUrl.searchParams.get('vista');if(vista==='ofertas')return json(listadoOfertasAdmin(user));if(vista==='usuarios')return json({usuarios:listadoUsuariosAdmin(user)});if(vista==='catalogos')return json({catalogos:catalogosAdmin(user)});return errorJson('Vista inválida.');}catch(e){return fail(e,'administración');}}
+export async function POST(request){if(!verificarOrigen(request))return errorJson('Origen no permitido.',403);const user=obtenerUsuarioDeRequest(request);if(user?.rol!=='admin')return errorJson('Acceso denegado.',403);try{const data=await leerJson(request);if(!data||typeof data!=='object')return errorJson('Solicitud inválida.');switch(data.operacion){case 'usuario':return json(gestionarUsuario(user,data));case 'oferta':return json(resolverOfertaAdmin(user,data));case 'catalogo':return json(guardarCatalogoAdmin(user,data));case 'crear_admin':return json(await registrarAdministrador(user,data));case 'clave_admin':return borrarCookie(json(await cambiarClaveAdmin(user,data)));default:return errorJson('Operación inválida.');}}catch(e){return fail(e,'administración');}}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BriefcaseBusiness,
   Building2,
@@ -27,15 +27,22 @@ export default function CompanyAccountPage() {
   const [summary, setSummary] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [savedNotice, setSavedNotice] = useState("");
+
+  const [user, setUser] = useState(null);
+  useEffect(() => {
+    let active = true;
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then(async (res) => { if (!res.ok) throw new Error(); return res.json(); })
+      .then((result) => { if (active) setUser(result.user); })
+      .catch(() => { if (active) window.location.assign("/ingresar"); });
+    return () => { active = false; };
+  }, []);
 
   const passwordReady = !newPassword || (checkPassword(newPassword).valid && newPassword === confirmPassword);
 
-  const handleSave = (e) => {
-    e.preventDefault();
-    setSavedNotice("Cambios guardados en la vista.");
-    setTimeout(() => setSavedNotice(""), 3000);
-  };
+  // La edición y el cambio de contraseña se conectarán en otra entrega.
+  // Nunca afirmar que una edición local fue guardada en SQLite.
+  if (!user) return <DashboardShell role="empresa" title="Mi cuenta"><p role="status" className="rounded-xl bg-white p-5 text-sm text-slate-600">Cargando tu cuenta...</p></DashboardShell>;
 
   return (
     <DashboardShell
@@ -54,13 +61,9 @@ export default function CompanyAccountPage() {
         </p>
       </div>
 
-      {savedNotice && (
-        <div className="mb-5 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-800">
-          <CheckCircle2 size={16} className="text-emerald-600" />
-          {savedNotice}
-        </div>
-      )}
-
+      <p className="mb-5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-brand-navy">
+        Estos son los datos guardados en SQLite. En esta etapa puedes consultarlos; la edición y el cambio de contraseña aún no están habilitados.
+      </p>
       {/* Columna única centrada con tarjetas apiladas */}
       <div className="mx-auto max-w-4xl space-y-6">
         {/* Tarjeta 1: Identidad Empresarial */}
@@ -74,7 +77,7 @@ export default function CompanyAccountPage() {
                 Datos Fiscales y Corporativos
               </h2>
               <p className="mt-0.5 text-xs text-slate-500">
-                Datos institucionales para convenios de colaboración y expedientes.
+                Datos corporativos registrados por tu organización.
               </p>
             </div>
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#eeefff] text-brand-navy">
@@ -88,6 +91,8 @@ export default function CompanyAccountPage() {
                 Razón Social Completa
               </label>
               <input
+                readOnly
+                defaultValue={user.razon_social || ""}
                 type="text"
                 placeholder=""
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-brand-navy focus:bg-white"
@@ -99,6 +104,8 @@ export default function CompanyAccountPage() {
                 Nombre Comercial / Marca
               </label>
               <input
+                readOnly
+                defaultValue={user.nombre_comercial || ""}
                 type="text"
                 placeholder=""
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-brand-navy focus:bg-white"
@@ -111,6 +118,8 @@ export default function CompanyAccountPage() {
               </label>
               <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5">
                 <input
+                  readOnly
+                  defaultValue={user.rfc || ""}
                   type="text"
                   placeholder=""
                   className="w-full bg-transparent text-sm font-medium uppercase text-slate-800 outline-none"
@@ -118,7 +127,7 @@ export default function CompanyAccountPage() {
                 <Lock size={14} className="ml-2 shrink-0 text-slate-400" />
               </div>
               <p className="mt-1.5 text-[11px] leading-4 text-slate-400">
-                Uso exclusivo de validación jurídica. No expuesto públicamente.
+                Información fiscal privada visible únicamente en tu cuenta y para administración.
               </p>
             </div>
 
@@ -127,7 +136,8 @@ export default function CompanyAccountPage() {
                 Tipo de Contribuyente
               </label>
               <select
-                defaultValue=""
+                disabled
+                defaultValue={user.tipo_contribuyente || ""}
                 className="select-chevron w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-brand-navy focus:bg-white"
               >
                 <option value="" disabled>
@@ -135,7 +145,6 @@ export default function CompanyAccountPage() {
                 </option>
                 <option value="moral">Persona Moral (Régimen General de Ley)</option>
                 <option value="fisica">Persona Física con Actividad Empresarial</option>
-                <option value="resico">Régimen Simplificado de Confianza (RESICO)</option>
               </select>
             </div>
           </div>
@@ -145,16 +154,14 @@ export default function CompanyAccountPage() {
               Sector Industrial / Rama Técnica
             </label>
             <select
-              defaultValue=""
+              disabled
+              defaultValue={user.sector || ""}
               className="select-chevron w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-brand-navy focus:bg-white"
             >
               <option value="" disabled>
                 Selecciona un sector
               </option>
-              <option value="tech">Tecnologías de la Información, IoT y Automatización Industrial</option>
-              <option value="software">Desarrollo de Software y Servicios Digitales</option>
-              <option value="manufactura">Manufactura Avanzada e Ingeniería</option>
-              <option value="finanzas">Servicios Financieros y Consultoría</option>
+              <option value={user.sector || ""}>{user.sector || "Sin especificar"}</option>
             </select>
           </div>
 
@@ -173,6 +180,8 @@ export default function CompanyAccountPage() {
                 <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 focus-within:border-brand-navy focus-within:bg-white">
                   <User size={15} className="shrink-0 text-slate-400" />
                   <input
+                    readOnly
+                    defaultValue={user.contacto_nombre || ""}
                     type="text"
                     placeholder=""
                     className="w-full bg-transparent text-sm text-slate-800 outline-none"
@@ -187,6 +196,8 @@ export default function CompanyAccountPage() {
                 <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 focus-within:border-brand-navy focus-within:bg-white">
                   <BriefcaseBusiness size={15} className="shrink-0 text-slate-400" />
                   <input
+                    readOnly
+                    defaultValue={user.contacto_cargo || ""}
                     type="text"
                     placeholder=""
                     className="w-full bg-transparent text-sm text-slate-800 outline-none"
@@ -200,13 +211,14 @@ export default function CompanyAccountPage() {
                     Correo Corporativo
                   </label>
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#8b6600]">
-                    <CheckCircle2 size={12} />
-                    Verificado
+                    {user.email_verificado ? "Correo verificado" : "Verificación pendiente"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 focus-within:border-brand-navy focus-within:bg-white">
                   <Mail size={15} className="shrink-0 text-slate-400" />
                   <input
+                    readOnly
+                    defaultValue={user.email || ""}
                     type="email"
                     placeholder=""
                     className="w-full bg-transparent text-sm text-slate-800 outline-none"
@@ -221,6 +233,8 @@ export default function CompanyAccountPage() {
                 <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 focus-within:border-brand-navy focus-within:bg-white">
                   <Phone size={15} className="shrink-0 text-slate-400" />
                   <input
+                    readOnly
+                    defaultValue={user.telefono || ""}
                     type="tel"
                     placeholder=""
                     className="w-full bg-transparent text-sm text-slate-800 outline-none"
@@ -235,6 +249,8 @@ export default function CompanyAccountPage() {
                 <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 focus-within:border-brand-navy focus-within:bg-white">
                   <Link2 size={15} className="shrink-0 text-slate-400" />
                   <input
+                    readOnly
+                    defaultValue={user.sitio_web || ""}
                     type="url"
                     placeholder=""
                     className="w-full bg-transparent text-sm text-slate-800 outline-none"
@@ -249,6 +265,8 @@ export default function CompanyAccountPage() {
                 <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 focus-within:border-brand-navy focus-within:bg-white">
                   <MapPin size={15} className="shrink-0 text-slate-400" />
                   <input
+                    readOnly
+                    defaultValue={[user.ciudad, user.entidad].filter(Boolean).join(", ")}
                     type="text"
                     placeholder=""
                     className="w-full bg-transparent text-sm text-slate-800 outline-none"
@@ -270,7 +288,7 @@ export default function CompanyAccountPage() {
                 Descripción de la Empresa y Cultura
               </h2>
               <p className="mt-0.5 text-xs text-slate-500">
-                Presentación corporativa compartida con instituciones educativas y candidatos.
+                Descripción corporativa registrada en ConectU.
               </p>
             </div>
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#eeefff] text-brand-navy">
@@ -281,17 +299,17 @@ export default function CompanyAccountPage() {
           <div className="mt-5">
             <div className="mb-1.5 flex items-center justify-between gap-2">
               <label className="text-xs font-semibold text-slate-700">
-                Resumen Institucional
+                Descripción de la organización
               </label>
               <span className="text-xs font-medium text-slate-400">
-                {summary.length} / {MAX_SUMMARY_LENGTH}
+                {(user.descripcion || "").length} caracteres
               </span>
             </div>
             <textarea
               rows={4}
               maxLength={MAX_SUMMARY_LENGTH}
-              value={summary}
-              onChange={(e) => setSummary(e.target.value)}
+              value={user.descripcion || ""}
+              readOnly
               placeholder=""
               className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 text-sm leading-6 text-slate-800 outline-none transition focus:border-brand-navy focus:bg-white"
             />
@@ -319,6 +337,7 @@ export default function CompanyAccountPage() {
                 <Lock size={14} className="shrink-0 text-slate-400" />
                 <input
                   type="password"
+                  disabled
                   placeholder=""
                   className="w-full bg-transparent text-sm text-slate-800 outline-none"
                 />
@@ -333,6 +352,7 @@ export default function CompanyAccountPage() {
                 <Globe size={14} className="shrink-0 text-slate-400" />
                 <input
                   type="password"
+                  disabled
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder=""
@@ -349,6 +369,7 @@ export default function CompanyAccountPage() {
                 <Shield size={14} className="shrink-0 text-slate-400" />
                 <input
                   type="password"
+                  disabled
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder=""
@@ -363,7 +384,7 @@ export default function CompanyAccountPage() {
             </div>
           </div>
 
-          <div className="mt-5"><PasswordStrength password={newPassword} /></div>
+          <p className="mt-5 text-xs text-slate-500">El cambio de contraseña estará disponible cuando implementemos el módulo de seguridad del perfil.</p>
           {newPassword && !passwordReady && <p role="status" className="mt-2 text-xs text-rose-700">Comprueba los cinco requisitos y que ambas contraseñas coincidan.</p>}
         </section>
 
@@ -371,12 +392,11 @@ export default function CompanyAccountPage() {
         <div className="flex justify-end pt-1">
           <button
             type="button"
-            onClick={handleSave}
-            disabled={!passwordReady}
+            disabled
             className="inline-flex items-center gap-2 rounded-xl bg-brand-navy px-5 py-2.5 text-xs font-semibold text-white shadow-xs transition hover:bg-brand-navy/90"
           >
             <Save size={15} />
-            Guardar cambios
+            Edición próximamente
           </button>
         </div>
       </div>

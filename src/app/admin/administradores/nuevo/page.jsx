@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { operacionAdministracion } from "@/components/admin/admin-api";
 import { useState } from "react";
 import {
   ArrowLeft,
@@ -21,15 +22,14 @@ export default function NewAdministratorPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [requirePasswordChange, setRequirePasswordChange] = useState(true);
-  const [enableTwoFactor, setEnableTwoFactor] = useState(false);
   const [notice, setNotice] = useState("");
+  const [busy,setBusy]=useState(false);
 
   const passwordRequirements = checkPassword(password).checks.map(({ label, valid }) => ({ label, met: valid }));
   const score = passwordRequirements.filter((requirement) => requirement.met).length;
   const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     setNotice("");
 
@@ -42,9 +42,12 @@ export default function NewAdministratorPage() {
       return;
     }
 
-    // La creación de administradores se hará en el servidor, una vez implementados
-    // autenticación, permisos y persistencia. Aquí solo se valida el formulario.
-    setNotice("Los datos del formulario son válidos. La creación de la cuenta se habilitará al integrar la autenticación administrativa.");
+    if(busy)return;
+    const form=event.currentTarget;
+    const fields=Object.fromEntries(new FormData(form));
+    setBusy(true);
+    try{await operacionAdministracion({...fields,operacion:"crear_admin"});form.reset();setPassword("");setConfirmPassword("");setNotice("Administrador registrado correctamente.");}
+    catch(e){setNotice(e.message);}finally{setBusy(false);}
   }
 
   return (
@@ -59,47 +62,46 @@ export default function NewAdministratorPage() {
         </nav>
 
         <p className="mb-6 max-w-[780px] text-sm leading-6 text-slate-600 sm:text-base">
-          Alta de cuentas para personal autorizado de ConectU. Los permisos y las credenciales se validarán de forma privada en el servidor.
+          Alta de cuentas para personal autorizado de ConectU. Los campos corresponden a la tabla USUARIOS: nombre, apellidos, correo y contraseña protegida. El rol Administrador se asignará en el servidor.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
           <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-soft" aria-labelledby="admin-identidad">
-            <SectionHeader number="1" title="Datos de identidad y cargo" detail="Paso obligatorio" />
+            <SectionHeader number="1" title="Datos personales" detail="Paso obligatorio" />
             <div className="grid gap-x-5 gap-y-5 px-5 py-5 sm:grid-cols-2 sm:px-6 sm:py-6">
-              <Field
-                id="admin-full-name"
-                label="Nombre completo"
-                hint="Nombre y apellidos"
-                className="sm:col-span-2"
-              >
+              <Field id="admin-first-name" label="Nombre">
                 <input
-                  id="admin-full-name"
-                  name="fullName"
+                  id="admin-first-name"
+                  name="nombre"
                   type="text"
                   required
-                  autoComplete="name"
-                  placeholder="Ej. María Fernanda López Hernández"
+                  maxLength={120}
+                  autoComplete="given-name"
+                  placeholder="Ej. María Fernanda"
                   className={inputClass}
                 />
               </Field>
-              <Field id="admin-email" label="Correo electrónico" hint="Correo del administrador">
+              <Field id="admin-last-name" label="Apellidos">
+                <input
+                  id="admin-last-name"
+                  name="apellidos"
+                  type="text"
+                  required
+                  maxLength={160}
+                  autoComplete="family-name"
+                  placeholder="Ej. López Hernández"
+                  className={inputClass}
+                />
+              </Field>
+              <Field id="admin-email" label="Correo electrónico" className="sm:col-span-2">
                 <input
                   id="admin-email"
                   name="email"
                   type="email"
                   required
+                  maxLength={254}
                   autoComplete="email"
                   placeholder="nombre@dominio.com"
-                  className={inputClass}
-                />
-              </Field>
-              <Field id="admin-internal-code" label="Identificador interno" hint="Opcional">
-                <input
-                  id="admin-internal-code"
-                  name="internalCode"
-                  type="text"
-                  maxLength={40}
-                  placeholder="Ej. ADM-001"
                   className={inputClass}
                 />
               </Field>
@@ -164,52 +166,21 @@ export default function NewAdministratorPage() {
             </div>
           </section>
 
-          <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-soft" aria-labelledby="admin-politicas">
-            <SectionHeader number="3" title="Permisos y políticas de verificación" detail="Opciones de acceso" />
-            <div className="space-y-1 px-5 py-4 sm:px-6 sm:py-5">
-              <label className="flex cursor-pointer items-start gap-3 rounded-lg px-2 py-3 transition hover:bg-slate-50">
-                <input
-                  type="checkbox"
-                  name="requirePasswordChange"
-                  checked={requirePasswordChange}
-                  onChange={(event) => setRequirePasswordChange(event.target.checked)}
-                  className="mt-1 h-4 w-4 shrink-0 accent-brand-navy"
-                />
-                <span className="min-w-0">
-                  <span className="block text-sm font-semibold text-brand-navy">Requerir cambio de contraseña en el primer inicio de sesión</span>
-                  <span className="mt-1 block text-xs leading-5 text-slate-500">El administrador deberá sustituir la contraseña provisional cuando acceda a su cuenta.</span>
-                </span>
-              </label>
-              <label className="flex cursor-pointer items-start gap-3 rounded-lg px-2 py-3 transition hover:bg-slate-50">
-                <input
-                  type="checkbox"
-                  name="enableTwoFactor"
-                  checked={enableTwoFactor}
-                  onChange={(event) => setEnableTwoFactor(event.target.checked)}
-                  className="mt-1 h-4 w-4 shrink-0 accent-brand-navy"
-                />
-                <span className="min-w-0">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-semibold text-brand-navy">Solicitar autenticación de dos factores (2FA)</span>
-                    <span className="rounded-md bg-[#e7eefc] px-2 py-0.5 text-[10px] font-bold text-brand-navy">Opcional</span>
-                  </span>
-                  <span className="mt-1 block text-xs leading-5 text-slate-500">Segunda verificación de acceso, sujeta al proveedor de autenticación que se integre.</span>
-                </span>
-              </label>
-            </div>
-          </section>
-
           {notice && (
             <p role="status" className="rounded-lg border border-slate-200 bg-[#edf2fc] px-4 py-3 text-sm leading-6 text-brand-navy">
               {notice}
             </p>
           )}
 
+          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm leading-6 text-brand-navy">
+            El alta es privada. La contraseña se almacena mediante hash seguro y el rol se asigna en el servidor.
+          </div>
+
           <div className="flex flex-col-reverse justify-between gap-3 pt-1 sm:flex-row sm:items-center">
             <Link href="/admin" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#dfe9fc] px-6 py-3 text-sm font-semibold text-brand-navy transition hover:bg-[#d1dff8]">
               <ArrowLeft size={17} aria-hidden="true" /> Cancelar y volver
             </Link>
-            <button type="submit" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand-navy px-6 py-3 text-sm font-bold text-white shadow-soft transition hover:bg-brand-navy-light">
+            <button type="submit" disabled={busy} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand-navy px-6 py-3 text-sm font-bold text-white shadow-soft transition hover:bg-brand-navy-light">
               <UserRoundPlus size={17} aria-hidden="true" /> Crear administrador
             </button>
           </div>
@@ -238,7 +209,7 @@ function Field({ id, label, hint, children, className = "" }) {
     <div className={`min-w-0 ${className}`}>
       <div className="mb-2 flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
         <label htmlFor={id} className="text-sm font-semibold text-brand-navy">
-          {label}{id !== "admin-internal-code" && <span className="ml-0.5 text-rose-600">*</span>}
+          {label}<span className="ml-0.5 text-rose-600">*</span>
         </label>
         {hint && <span className="text-[11px] text-slate-500">{hint}</span>}
       </div>
